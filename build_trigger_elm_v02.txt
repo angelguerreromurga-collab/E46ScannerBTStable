@@ -1,0 +1,1 @@
+Trigger Android APK build for ELM327 read-only v0.2.
