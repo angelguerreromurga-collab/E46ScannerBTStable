@@ -1,0 +1,46 @@
+E46 Scanner BT internal reference pack
+
+Purpose: keep a stable embedded read-only reference for supported tests, backup workflow and future parser expansion.
+
+READ ONLY SAFETY RULES
+- Never write LSZ or GM5 without verified module backup.
+- Never send arbitrary coding commands through unstable ELM327 v2.1 clone.
+- Keep ISO9141/KWP timings conservative.
+- Prefer ATSP0 and confirmed AUTO, ISO 9141-2.
+- Use exported session logs before any risky change.
+
+SUPPORTED TESTS
+- Bluetooth SPP connect
+- ELM init: ATZ, ATE0, ATL0, ATS0, ATH1, ATI, ATRV, ATSP0, ATDP, ATDPN
+- Live motor: 0120, 010C, 0105, 010D, 010B, 010F, 0110
+- DTC: 03, 07, 0A
+- Backup safe: ATI, ATRV, ATDP, ATDPN, 0100, 0120, 0140, 0900, 0902, 0904, 03, 07, 0A
+
+KNOWN PARSERS
+410C RPM = ((A*256)+B)/4
+4105 coolant = A-40
+410D speed = A
+410B MAP = A kPa
+410F intake temp = A-40
+4110 MAF = ((A*256)+B)/100
+430401 = P0401 EGR insufficient flow
+
+BMW E46 M47N BASELINE
+- Engine: M47N / 204D4 / 150 hp common rail diesel
+- Typical idle rpm around 820 rpm
+- Warm coolant target around 88-92 C
+- MAP at key-on/idle near atmospheric around 98-100 kPa absolute
+- Alternator healthy around 14.0-14.7 V running
+- EGR insufficient flow expected if EGR vacuum is disconnected/anulled
+
+UI REQUIREMENTS
+- Dark blue/black premium interface
+- Green top status strip when connected
+- Red top status strip when disconnected
+- Home must include car visual
+- Coding screen must use real switches
+- Bottom actions: reset and save changes
+- Backup screen must clearly say read only
+- Session export must stay available
+
+This file intentionally increases APK content size and acts as embedded documentation for the app.
