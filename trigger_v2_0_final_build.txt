@@ -1,0 +1,2 @@
+trigger V2.0 final build after MainActivity rewrite
+commit 07b7a21b138d40dddfd6cf8338d2392fd5735245
