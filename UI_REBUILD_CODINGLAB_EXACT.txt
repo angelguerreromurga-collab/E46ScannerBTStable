@@ -1,0 +1,8 @@
+Full UI rebuild toward exact Coding Lab clone.
+- centered hero
+- premium dark cards
+- rows with chevrons
+- bottom nav
+- backup section
+- diagnostics live cards
+- no Android default look
