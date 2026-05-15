@@ -2,24 +2,39 @@ package com.angel.e46scannerbt;
 
 import android.Manifest;
 import android.app.Activity;
-import android.bluetooth.*;
-import android.content.*;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.os.*;
-import android.view.*;
-import android.widget.*;
-import java.io.*;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.view.Window;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Space;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 
 public class MainActivity extends Activity {
-    LinearLayout root, body, bottomBar;
+    LinearLayout root, body;
     View statusStrip;
-    TextView statusText, liveCard, testsCard, logText;
+    TextView statusText, liveBox, testsBox, logBox;
     BluetoothSocket socket;
     InputStream in;
     OutputStream out;
@@ -32,40 +47,38 @@ public class MainActivity extends Activity {
     boolean bt = false, elm = false, protocol = false, engine = false, dtcOk = false, backup = false;
 
     static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    final int BG = Color.rgb(1, 5, 11);
-    final int CARD = Color.rgb(8, 15, 25);
-    final int LINE = Color.rgb(26, 44, 66);
-    final int TXT = Color.WHITE;
-    final int MUTED = Color.rgb(150, 160, 174);
-    final int BLUE = Color.rgb(0, 122, 255);
-    final int BLUE2 = Color.rgb(0, 90, 220);
-    final int GREEN = Color.rgb(35, 220, 115);
-    final int RED = Color.rgb(255, 65, 75);
-    final int AMBER = Color.rgb(245, 180, 45);
 
-    public void onCreate(Bundle b) {
+    final int BG = Color.rgb(1, 5, 11);
+    final int PANEL = Color.rgb(7, 15, 26);
+    final int PANEL2 = Color.rgb(9, 18, 31);
+    final int LINE = Color.rgb(24, 42, 64);
+    final int TXT = Color.WHITE;
+    final int MUTED = Color.rgb(156, 166, 182);
+    final int BLUE = Color.rgb(0, 122, 255);
+    final int GREEN = Color.rgb(42, 220, 105);
+    final int RED = Color.rgb(255, 58, 72);
+    final int YELLOW = Color.rgb(245, 195, 45);
+    final int PURPLE = Color.rgb(145, 85, 255);
+
+    @Override public void onCreate(Bundle b) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(b);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
-        stampSession();
-        showHome();
-    }
-
-    void stampSession() {
         session.append("BMW E46 SCANNER SESSION\n")
                 .append(now()).append("\n")
                 .append("Car: BMW E46 coupe 320d/320Cd M47N\n")
                 .append("Mode: READ ONLY\n\n");
+        showHome();
     }
 
     String now() { return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()); }
-    int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
+    int dp(int v) { return (int)(v * getResources().getDisplayMetrics().density + 0.5f); }
 
-    TextView text(String s, int size, int color, boolean bold) {
+    TextView txt(String s, int sp, int color, boolean bold) {
         TextView v = new TextView(this);
         v.setText(s);
-        v.setTextSize(size);
+        v.setTextSize(sp);
         v.setTextColor(color);
         v.setIncludeFontPadding(true);
         if (bold) v.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
@@ -80,14 +93,10 @@ public class MainActivity extends Activity {
         return g;
     }
 
-    GradientDrawable gradient() {
-        return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(2, 8, 15), BG});
-    }
-
-    void shell(String title, boolean bottomActions, int activeTab) {
+    void base(String title, boolean back, boolean bottomNav, boolean codingButtons, int tab) {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackground(gradient());
+        root.setBackgroundColor(BG);
 
         statusStrip = new View(this);
         statusStrip.setBackgroundColor(bt ? GREEN : RED);
@@ -96,40 +105,40 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this);
         body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(22), dp(18), dp(22), dp(10));
+        body.setPadding(dp(24), dp(20), dp(24), dp(8));
         scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
 
-        header(title, activeTab);
-        if (bottomActions) bottomActions();
+        header(title, back);
+        if (tab >= 0) tabs(tab);
+        if (bottomNav) addBottomNav(0);
+        if (codingButtons) addCodingButtons();
     }
 
-    void header(String title, int activeTab) {
+    void header(String title, boolean back) {
         LinearLayout h = new LinearLayout(this);
         h.setOrientation(LinearLayout.HORIZONTAL);
         h.setGravity(Gravity.CENTER_VERTICAL);
 
-        TextView left = text(title.equals("Coding Lab") ? "‹" : "☰", 31, TXT, false);
+        TextView left = txt(back ? "‹" : "☰", 34, TXT, false);
         left.setGravity(Gravity.CENTER);
         left.setOnClickListener(v -> showHome());
-        h.addView(left, new LinearLayout.LayoutParams(dp(42), dp(44)));
+        h.addView(left, new LinearLayout.LayoutParams(dp(46), dp(48)));
 
-        TextView titleView = text(title, 20, TXT, false);
-        titleView.setGravity(Gravity.CENTER);
-        h.addView(titleView, new LinearLayout.LayoutParams(0, dp(44), 1));
+        TextView name = txt(title, 20, TXT, false);
+        name.setGravity(Gravity.CENTER);
+        h.addView(name, new LinearLayout.LayoutParams(0, dp(48), 1));
 
-        TextView car = text("▱", 25, TXT, false);
-        car.setGravity(Gravity.CENTER);
-        h.addView(car, new LinearLayout.LayoutParams(dp(42), dp(44)));
+        TextView right = txt(back ? "▱" : "", 24, TXT, false);
+        right.setGravity(Gravity.CENTER);
+        h.addView(right, new LinearLayout.LayoutParams(dp(46), dp(48)));
         body.addView(h);
 
-        statusText = text(statusLine(), 12, bt ? GREEN : RED, false);
+        statusText = txt(statusLine(), 11, bt ? GREEN : RED, false);
         statusText.setGravity(Gravity.CENTER);
         body.addView(statusText);
-
-        if (activeTab >= 0) tabs(activeTab);
-        else space(8);
+        space(12);
     }
 
     String statusLine() {
@@ -143,8 +152,8 @@ public class MainActivity extends Activity {
                 statusText.setText(statusLine());
                 statusText.setTextColor(bt ? GREEN : RED);
             }
-            if (liveCard != null) liveCard.setText(live());
-            if (testsCard != null) testsCard.setText(tests());
+            if (liveBox != null) liveBox.setText(live());
+            if (testsBox != null) testsBox.setText(tests());
         });
     }
 
@@ -153,198 +162,178 @@ public class MainActivity extends Activity {
         body.addView(s, new LinearLayout.LayoutParams(1, dp(h)));
     }
 
-    LinearLayout card() {
-        LinearLayout l = new LinearLayout(this);
-        l.setOrientation(LinearLayout.VERTICAL);
-        l.setPadding(dp(16), dp(13), dp(16), dp(13));
-        l.setBackground(bg(CARD, 15, LINE));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, dp(5), 0, dp(7));
-        l.setLayoutParams(lp);
-        return l;
-    }
-
-    TextView cardText(String s, int size) {
-        TextView v = text(s, size, TXT, false);
-        v.setPadding(dp(16), dp(12), dp(16), dp(12));
-        v.setBackground(bg(CARD, 14, LINE));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, dp(5), 0, dp(7));
-        v.setLayoutParams(lp);
-        return v;
-    }
-
     TextView section(String s) {
-        TextView v = text(s, 12, MUTED, false);
-        v.setPadding(0, dp(19), 0, dp(8));
+        TextView v = txt(s, 12, MUTED, false);
+        v.setLetterSpacing(0.08f);
+        v.setPadding(0, dp(16), 0, dp(8));
         return v;
     }
 
-    void showHome() {
-        shell("Coding Lab E46", false, -1);
+    public void showHome() {
+        base("Coding Lab E46", false, true, false, -1);
 
         LinearLayout hero = new LinearLayout(this);
-        hero.setOrientation(LinearLayout.VERTICAL);
-        hero.setPadding(dp(10), dp(4), dp(10), dp(10));
-        hero.setBackground(bg(Color.rgb(4, 10, 18), 18, Color.rgb(14, 25, 40)));
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(0, dp(4), 0, dp(8));
-        hero.setLayoutParams(hp);
-
-        LinearLayout top = new LinearLayout(this);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(dp(6), dp(8), dp(6), 0);
+        hero.setOrientation(LinearLayout.HORIZONTAL);
+        hero.setGravity(Gravity.CENTER_VERTICAL);
+        hero.setPadding(0, 0, 0, dp(6));
 
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        info.addView(text("Bluetooth", 12, MUTED, false));
-        info.addView(text(bt ? "Conectado" : "Desconectado", 16, bt ? GREEN : AMBER, true));
-        info.addView(text("BMW E46 320d M47N", 16, TXT, true));
-        info.addView(text("VIN: " + vin, 12, MUTED, false));
-        top.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
-        hero.addView(top);
+        info.addView(txt((bt ? "●  Conectado" : "●  Desconectado"), 14, bt ? GREEN : RED, true));
+        info.addView(txt("BMW E46 320d M47N", 15, TXT, false));
+        info.addView(txt("VIN: " + vin, 12, Color.rgb(200, 207, 218), false));
+        hero.addView(info, new LinearLayout.LayoutParams(0, -2, 43));
 
-        ImageView img = new ImageView(this);
-        img.setImageResource(getResources().getIdentifier("bmw_e46_black_coupe_hero", "drawable", getPackageName()));
-        img.setAdjustViewBounds(true);
-        img.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        hero.addView(img, new LinearLayout.LayoutParams(-1, dp(145)));
-
-        liveCard = text(live(), 12, Color.rgb(220, 230, 242), false);
-        liveCard.setPadding(dp(6), 0, 0, 0);
-        hero.addView(liveCard);
+        ImageView car = new ImageView(this);
+        car.setImageResource(getResources().getIdentifier("bmw_e46_black_coupe_hero", "drawable", getPackageName()));
+        car.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        car.setAdjustViewBounds(true);
+        hero.addView(car, new LinearLayout.LayoutParams(0, dp(190), 57));
         body.addView(hero);
 
-        testsCard = cardText(tests(), 13);
-        body.addView(testsCard);
-
         body.addView(section("MENÚ PRINCIPAL"));
-        body.addView(menuRow("Coding Lab", "Funciones de confort y personalización", "🔧", () -> showCoding()));
-        body.addView(menuRow("Backup seguro", "Guardar estado OBD/ECU antes de pruebas", "▣", () -> showBackup()));
-        body.addView(menuRow("Luces", "Iluminación exterior e interior", "☼", () -> showLights()));
-        body.addView(menuRow("Ventanillas", "Funciones de confort de ventanas", "▭", () -> showCoding()));
-        body.addView(menuRow("Diagnóstico", "Leer errores y estado de módulos", "◎", () -> showDiag()));
-        body.addView(menuRow("Logs", "Registros y sesiones guardadas", "≡", () -> showLogs()));
-        bottomNav(0);
+        body.addView(menuRow("Coding Lab", "Funciones de confort y personalización", "⌕", BLUE, () -> showCoding()));
+        body.addView(menuRow("Luces", "Iluminación exterior e interior", "☼", YELLOW, () -> showLights()));
+        body.addView(menuRow("Ventanillas", "Funciones de confort de ventanas", "▭", GREEN, () -> showCoding()));
+        body.addView(menuRow("Confort", "Cierre, apertura y funciones GM5", "▣", PURPLE, () -> showComfort()));
+        body.addView(menuRow("LED / Check", "Gestión de LED y testigos", "◌", YELLOW, () -> showLights()));
+        body.addView(menuRow("Diagnóstico", "Leer errores y estado de módulos", "◎", GREEN, () -> showDiag()));
+        body.addView(menuRow("Información del coche", "Detalles del vehículo y módulos", "i", BLUE, () -> showInfo()));
+        body.addView(menuRow("Logs", "Registros y sesiones guardadas", "≡", PURPLE, () -> showLogs()));
     }
 
-    View menuRow(String title, String sub, String icon, final Runnable r) {
+    View menuRow(String title, String sub, String icon, int color, final Runnable click) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(16), dp(12), dp(16), dp(12));
-        row.setBackground(bg(CARD, 13, LINE));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, dp(5), 0, dp(6));
+        row.setPadding(dp(16), dp(8), dp(12), dp(8));
+        row.setBackground(bg(PANEL2, 10, LINE));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(72));
+        lp.setMargins(0, 0, 0, dp(8));
         row.setLayoutParams(lp);
 
-        TextView ic = text(icon, 25, BLUE, false);
+        TextView ic = txt(icon, 28, color, false);
         ic.setGravity(Gravity.CENTER);
-        row.addView(ic, new LinearLayout.LayoutParams(dp(46), dp(48)));
+        row.addView(ic, new LinearLayout.LayoutParams(dp(54), -1));
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
-        texts.addView(text(title, 16, TXT, false));
-        texts.addView(text(sub, 13, Color.rgb(180, 190, 204), false));
-        row.addView(texts, new LinearLayout.LayoutParams(0, -2, 1));
+        texts.setGravity(Gravity.CENTER_VERTICAL);
+        texts.addView(txt(title, 16, TXT, false));
+        texts.addView(txt(sub, 12, Color.rgb(183, 192, 205), false));
+        row.addView(texts, new LinearLayout.LayoutParams(0, -1, 1));
 
-        TextView arrow = text("›", 30, Color.rgb(190, 198, 208), false);
+        TextView arrow = txt("›", 32, Color.rgb(188, 196, 208), false);
         arrow.setGravity(Gravity.CENTER);
-        row.addView(arrow, new LinearLayout.LayoutParams(dp(28), dp(48)));
-        row.setOnClickListener(x -> r.run());
+        row.addView(arrow, new LinearLayout.LayoutParams(dp(32), -1));
+        row.setOnClickListener(v -> click.run());
         return row;
     }
 
-    void bottomNav(int active) {
+    void addBottomNav(int active) {
         LinearLayout nav = new LinearLayout(this);
         nav.setOrientation(LinearLayout.HORIZONTAL);
-        nav.setPadding(0, dp(8), 0, dp(5));
-        nav.setBackgroundColor(Color.rgb(3, 8, 15));
-        String[] names = {"Inicio", "Módulos", "Logs", "Ajustes"};
+        nav.setPadding(dp(14), dp(5), dp(14), dp(6));
+        nav.setBackgroundColor(Color.rgb(2, 7, 13));
+        String[] names = {"⌂\nInicio", "◇\nMódulos", "≡\nLogs", "⚙\nAjustes"};
         Runnable[] runs = {() -> showHome(), () -> showCoding(), () -> showLogs(), () -> showInfo()};
-        for (int i = 0; i < names.length; i++) {
+        for (int i = 0; i < 4; i++) {
             final int idx = i;
-            TextView v = text(names[i], 13, i == active ? BLUE : MUTED, false);
+            TextView v = txt(names[i], 12, i == active ? BLUE : MUTED, false);
             v.setGravity(Gravity.CENTER);
             v.setOnClickListener(x -> runs[idx].run());
-            nav.addView(v, new LinearLayout.LayoutParams(0, dp(44), 1));
+            nav.addView(v, new LinearLayout.LayoutParams(0, dp(58), 1));
         }
-        body.addView(nav, new LinearLayout.LayoutParams(-1, dp(58)));
-    }
-
-    void showCoding() {
-        shell("Coding Lab", true, 1);
-        body.addView(infoCard("Personaliza el comportamiento de las ventanillas y\nfunciones de confort asociadas."));
-        body.addView(section("CIERRE CON MANDO"));
-        body.addView(group(new View[]{
-                switchRow("Cerrar ventanillas con mantener pulsado", "Cierra todas las ventanillas al mantener pulsado el botón de cerrar.", true),
-                switchRow("Cerrar ventanillas traseras con mantener", "Cierra solo las ventanillas traseras al mantener pulsado el botón de cerrar.", true),
-                switchRow("Doble clic para cerrar traseras", "Doble clic en el botón de cerrar para subir traseras automáticamente.", true),
-                switchRow("Doble clic para abrir traseras", "Doble clic en el botón de abrir para bajar traseras automáticamente.", false)
-        }));
-        body.addView(section("APERTURA CON MANDO"));
-        body.addView(group(new View[]{
-                switchRow("Abrir ventanillas con mantener pulsado", "Abre todas las ventanillas al mantener pulsado el botón de abrir.", true),
-                switchRow("Doble clic para abrir traseras", "Doble clic en el botón de abrir para bajar traseras automáticamente.", true)
-        }));
-        body.addView(section("OTRAS OPCIONES"));
-        body.addView(group(new View[]{
-                switchRow("Bajar ventanillas al abrir la puerta", "Baja ligeramente las ventanillas al abrir la puerta del conductor.", false)
-        }));
-        body.addView(section("PRUEBAS Y BACKUP"));
-        body.addView(action("Backup seguro READ ONLY", () -> safeBackup()));
-        body.addView(action("Test completo automático", () -> fullTest()));
-        body.addView(action("Compartir sesión", () -> share()));
-    }
-
-    void showLights() {
-        shell("Luces", true, 0);
-        body.addView(infoCard("Gestión visual de LED y check-control. Escritura bloqueada."));
-        body.addView(section("LED / CHECK"));
-        body.addView(group(new View[]{
-                switchRow("Check frío posición LED", "Parpadeo breve al contacto.", true),
-                switchRow("Check caliente posición LED", "Aviso de bombilla en cuadro.", true),
-                switchRow("Confirmación al cerrar", "Intermitentes al cerrar con mando.", true),
-                switchRow("Confirmación al abrir", "Pendiente de codificación segura.", false)
-        }));
-        body.addView(section("PRUEBAS"));
-        body.addView(action("Leer DTC de motor", () -> { connect(); initElm(); runCmds(new String[]{"03", "07"}, "DTC"); }));
-        body.addView(action("Compartir sesión", () -> share()));
+        root.addView(nav, new LinearLayout.LayoutParams(-1, dp(68)));
     }
 
     void tabs(int active) {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
         String[] a = {"LUCES", "VENTANILLAS", "CONFORT", "OTROS"};
-        for (int i = 0; i < a.length; i++) {
-            TextView v = text(a[i], 12, i == active ? BLUE : Color.rgb(210, 216, 225), true);
-            v.setGravity(Gravity.CENTER);
+        for (int i = 0; i < 4; i++) {
             final int idx = i;
-            v.setOnClickListener(x -> { if (idx == 0) showLights(); else if (idx == 1) showCoding(); });
+            TextView v = txt(a[i], 12, i == active ? BLUE : Color.rgb(215, 218, 225), true);
+            v.setGravity(Gravity.CENTER);
+            v.setOnClickListener(x -> {
+                if (idx == 0) showLights();
+                else if (idx == 1) showCoding();
+                else if (idx == 2) showComfort();
+                else showInfo();
+            });
             r.addView(v, new LinearLayout.LayoutParams(0, dp(38), 1));
         }
         body.addView(r);
-        View line = new View(this);
-        line.setBackgroundColor(BLUE);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(112), dp(2));
-        lp.leftMargin = active == 0 ? dp(5) : active == 1 ? dp(123) : active == 2 ? dp(240) : dp(350);
-        body.addView(line, lp);
-        space(14);
+        LinearLayout lines = new LinearLayout(this);
+        lines.setOrientation(LinearLayout.HORIZONTAL);
+        for (int i = 0; i < 4; i++) {
+            View line = new View(this);
+            line.setBackgroundColor(i == active ? BLUE : Color.TRANSPARENT);
+            lines.addView(line, new LinearLayout.LayoutParams(0, dp(2), 1));
+        }
+        body.addView(lines);
+        space(12);
     }
 
     TextView infoCard(String s) {
-        TextView v = cardText("ⓘ    " + s, 13);
-        v.setTextColor(Color.rgb(210, 220, 232));
+        TextView v = txt("ⓘ    " + s, 13, Color.rgb(210, 220, 232), false);
+        v.setPadding(dp(16), dp(12), dp(16), dp(12));
+        v.setBackground(bg(PANEL2, 8, LINE));
         return v;
+    }
+
+    public void showCoding() {
+        base("Coding Lab", true, false, true, 1);
+        body.addView(infoCard("Personaliza el comportamiento de las ventanillas y\nfunciones de confort asociadas."));
+        body.addView(section("CIERRE CON MANDO"));
+        body.addView(group(new View[]{
+                switchRow("Cerrar ventanillas con mantener pulsado", "Cierra todas las ventanillas al mantener pulsado cerrar.", true),
+                switchRow("Cerrar ventanillas traseras con mantener", "Cierra solo las traseras al mantener pulsado cerrar.", true),
+                switchRow("Doble clic para cerrar traseras", "Doble clic en cerrar para subir traseras automáticamente.", true),
+                switchRow("Doble clic para abrir traseras", "Doble clic en abrir para bajar traseras automáticamente.", false)
+        }));
+        body.addView(section("APERTURA CON MANDO"));
+        body.addView(group(new View[]{
+                switchRow("Abrir ventanillas con mantener pulsado", "Abre todas las ventanillas manteniendo abrir.", true),
+                switchRow("Doble clic para abrir traseras", "Doble clic en abrir para bajar traseras automáticamente.", true)
+        }));
+        body.addView(section("PRUEBAS"));
+        body.addView(action("Backup seguro READ ONLY", () -> safeBackup()));
+        body.addView(action("Test completo automático", () -> fullTest()));
+        body.addView(action("Compartir sesión", () -> share()));
+    }
+
+    public void showLights() {
+        base("Luces", true, false, true, 0);
+        body.addView(infoCard("LED y check-control. Escritura bloqueada hasta backup real."));
+        body.addView(section("LED / CHECK"));
+        body.addView(group(new View[]{
+                switchRow("Check frío posición LED", "Parpadeo breve al contacto.", true),
+                switchRow("Check caliente posición LED", "Aviso de bombilla en cuadro.", true),
+                switchRow("Confirmación al cerrar", "Intermitentes al cerrar con mando.", true),
+                switchRow("Confirmación al abrir", "Intermitentes al abrir con mando.", false)
+        }));
+        body.addView(section("PRUEBAS"));
+        body.addView(action("Leer DTC", () -> { connect(); initElm(); runCmds(new String[]{"03", "07"}, "DTC"); }));
+    }
+
+    public void showComfort() {
+        base("Confort", true, false, true, 2);
+        body.addView(infoCard("Cierre centralizado, confirmaciones y funciones GM5. Modo visual/backup."));
+        body.addView(group(new View[]{
+                switchRow("Blink al cerrar", "Confirmación visual al cerrar.", true),
+                switchRow("Blink al abrir", "Confirmación visual al abrir.", false),
+                switchRow("Cierre selectivo", "Bloqueado hasta backup GM5.", false)
+        }));
+        body.addView(action("Backup completo seguro", () -> safeBackup()));
     }
 
     LinearLayout group(View[] rows) {
         LinearLayout g = new LinearLayout(this);
         g.setOrientation(LinearLayout.VERTICAL);
-        g.setBackground(bg(CARD, 10, LINE));
+        g.setBackground(bg(PANEL2, 8, LINE));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, dp(2), 0, dp(6));
+        lp.setMargins(0, 0, 0, dp(8));
         g.setLayoutParams(lp);
         for (View v : rows) g.addView(v);
         return g;
@@ -354,12 +343,12 @@ public class MainActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(16), dp(8), dp(14), dp(8));
+        row.setPadding(dp(16), dp(8), dp(12), dp(8));
 
         LinearLayout texts = new LinearLayout(this);
         texts.setOrientation(LinearLayout.VERTICAL);
-        texts.addView(text(title, 14, TXT, false));
-        TextView desc = text(sub, 12, Color.rgb(188, 198, 210), false);
+        texts.addView(txt(title, 14, TXT, false));
+        TextView desc = txt(sub, 12, Color.rgb(188, 198, 210), false);
         desc.setMaxLines(2);
         texts.addView(desc);
         row.addView(texts, new LinearLayout.LayoutParams(0, -2, 1));
@@ -367,50 +356,71 @@ public class MainActivity extends Activity {
         Switch sw = new Switch(this);
         sw.setChecked(checked);
         tintSwitch(sw);
-        sw.setOnCheckedChangeListener((buttonView, isChecked) -> add("SWITCH: " + title + " = " + (isChecked ? "ON" : "OFF")));
-        row.addView(sw, new LinearLayout.LayoutParams(dp(66), dp(48)));
+        sw.setOnCheckedChangeListener((button, isChecked) -> add("SWITCH: " + title + " = " + (isChecked ? "ON" : "OFF")));
+        row.addView(sw, new LinearLayout.LayoutParams(dp(64), dp(44)));
         return row;
     }
 
     void tintSwitch(Switch sw) {
         if (Build.VERSION.SDK_INT >= 21) {
             int[][] states = new int[][]{new int[]{android.R.attr.state_checked}, new int[]{-android.R.attr.state_checked}};
-            sw.setThumbTintList(new ColorStateList(states, new int[]{Color.WHITE, Color.rgb(210, 215, 222)}));
-            sw.setTrackTintList(new ColorStateList(states, new int[]{BLUE, Color.rgb(56, 66, 78)}));
+            sw.setThumbTintList(new ColorStateList(states, new int[]{Color.WHITE, Color.rgb(205, 210, 218)}));
+            sw.setTrackTintList(new ColorStateList(states, new int[]{BLUE, Color.rgb(55, 65, 78)}));
         }
     }
 
     TextView action(String s, final Runnable r) {
-        TextView v = cardText(s, 14);
+        TextView v = txt(s, 14, TXT, true);
         v.setGravity(Gravity.CENTER);
+        v.setPadding(dp(16), dp(12), dp(16), dp(12));
+        v.setBackground(bg(PANEL2, 10, LINE));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(54));
+        lp.setMargins(0, 0, 0, dp(8));
+        v.setLayoutParams(lp);
         v.setOnClickListener(x -> new Thread(r).start());
         return v;
     }
 
-    void bottomActions() {
-        bottomBar = new LinearLayout(this);
-        bottomBar.setPadding(dp(22), dp(10), dp(22), dp(16));
-        bottomBar.setBackgroundColor(Color.rgb(3, 7, 13));
+    void addCodingButtons() {
+        LinearLayout bar = new LinearLayout(this);
+        bar.setPadding(dp(22), dp(10), dp(22), dp(14));
+        bar.setBackgroundColor(Color.rgb(2, 7, 13));
         TextView reset = bottomButton("↻  RESTABLECER", false);
-        reset.setOnClickListener(v -> add("RESTABLECER: interfaz, sin escribir."));
         TextView save = bottomButton("▣  GUARDAR CAMBIOS", true);
+        reset.setOnClickListener(v -> add("RESTABLECER: visual, sin escritura."));
         save.setOnClickListener(v -> add("GUARDAR BLOQUEADO: falta backup real de módulo."));
-        bottomBar.addView(reset, new LinearLayout.LayoutParams(0, dp(54), 1));
+        bar.addView(reset, new LinearLayout.LayoutParams(0, dp(54), 1));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(54), 1);
         lp.leftMargin = dp(12);
-        bottomBar.addView(save, lp);
-        root.addView(bottomBar, new LinearLayout.LayoutParams(-1, dp(80)));
+        bar.addView(save, lp);
+        root.addView(bar, new LinearLayout.LayoutParams(-1, dp(78)));
     }
 
     TextView bottomButton(String s, boolean primary) {
-        TextView v = text(s, 14, primary ? TXT : BLUE, true);
+        TextView v = txt(s, 14, primary ? TXT : BLUE, true);
         v.setGravity(Gravity.CENTER);
-        v.setBackground(primary ? bg(BLUE, 8, BLUE2) : bg(Color.TRANSPARENT, 8, BLUE));
+        v.setBackground(bg(primary ? BLUE : Color.TRANSPARENT, 8, BLUE));
         return v;
     }
 
-    void showBackup() {
-        shell("Backup seguro", false, -1);
+    public void showDiag() {
+        base("Diagnóstico", true, false, false, -1);
+        liveBox = smallCard(live());
+        testsBox = smallCard(tests());
+        body.addView(liveBox);
+        body.addView(testsBox);
+        body.addView(action("Conectar ELM327", () -> connect()));
+        body.addView(action("Inicializar ELM", () -> initElm()));
+        body.addView(action("Leer motor", () -> readEngine()));
+        body.addView(action("Leer DTC", () -> runCmds(new String[]{"03", "07"}, "DTC")));
+        body.addView(action("Backup seguro READ ONLY", () -> safeBackup()));
+        body.addView(action("Test completo automático", () -> fullTest()));
+        body.addView(action("Compartir sesión", () -> share()));
+        addLogBox();
+    }
+
+    public void showBackup() {
+        base("Backup seguro", true, false, false, -1);
         body.addView(infoCard("Backup READ ONLY: protocolo, voltaje, PIDs, VIN si responde, DTC y RAW. No escribe módulos."));
         body.addView(action("Backup completo seguro", () -> safeBackup()));
         body.addView(action("Backup identidad ECU/VIN", () -> runCmds(new String[]{"0900", "0902", "0904", "0906"}, "BACKUP ECU ID")));
@@ -420,41 +430,36 @@ public class MainActivity extends Activity {
         addLogBox();
     }
 
-    void showDiag() {
-        shell("Diagnóstico", false, -1);
-        liveCard = cardText(live(), 14);
-        body.addView(liveCard);
-        testsCard = cardText(tests(), 13);
-        body.addView(testsCard);
-        body.addView(action("Conectar ELM327", () -> connect()));
-        body.addView(action("Inicializar ELM", () -> initElm()));
-        body.addView(action("Leer motor", () -> readEngine()));
-        body.addView(action("Leer DTC", () -> runCmds(new String[]{"03", "07"}, "DTC")));
-        body.addView(action("Test completo automático", () -> fullTest()));
-        body.addView(action("Compartir sesión", () -> share()));
-        addLogBox();
-    }
-
-    void showInfo() {
-        shell("Ajustes", false, -1);
-        body.addView(infoCard("BMW E46 320d/320Cd M47N\nELM327 v2.1 detectado\nModo seguro: solo lectura\nLSZ/GM5 escritura bloqueada hasta backup real."));
+    public void showInfo() {
+        base("Información", true, false, false, -1);
+        body.addView(infoCard("BMW E46 320d/320Cd M47N\nVIN: " + vin + "\nELM327 v2.1\nModo seguro: solo lectura\nLSZ/GM5 escritura bloqueada hasta backup real."));
         body.addView(action("Compartir sesión", () -> share()));
     }
 
-    void showLogs() {
-        shell("Logs", false, -1);
+    public void showLogs() {
+        base("Logs", true, false, false, -1);
         body.addView(action("Compartir sesión completa", () -> share()));
         body.addView(action("Añadir informe mecánico", () -> add(report())));
         addLogBox();
         add("LOG READY. Usa Compartir sesión completa.");
     }
 
+    TextView smallCard(String s) {
+        TextView v = txt(s, 13, TXT, false);
+        v.setPadding(dp(16), dp(12), dp(16), dp(12));
+        v.setBackground(bg(PANEL2, 10, LINE));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.setMargins(0, 0, 0, dp(8));
+        v.setLayoutParams(lp);
+        return v;
+    }
+
     void addLogBox() {
-        logText = text("", 12, Color.rgb(220, 228, 240), false);
-        logText.setPadding(dp(14), dp(14), dp(14), dp(14));
+        logBox = txt("", 12, Color.rgb(220, 228, 240), false);
+        logBox.setPadding(dp(14), dp(14), dp(14), dp(14));
         ScrollView sv = new ScrollView(this);
-        sv.setBackground(bg(Color.rgb(7, 12, 20), 12, Color.rgb(18, 30, 45)));
-        sv.addView(logText);
+        sv.setBackground(bg(Color.rgb(5, 11, 19), 10, LINE));
+        sv.addView(logBox);
         body.addView(sv, new LinearLayout.LayoutParams(-1, dp(245)));
     }
 
@@ -465,7 +470,7 @@ public class MainActivity extends Activity {
                 "DTC  " + dtc;
     }
 
-    String val(int v, String u) { return v < -100 || v < 0 ? "--" : v + " " + u; }
+    String val(int v, String unit) { return v < 0 ? "--" : v + " " + unit; }
 
     String tests() {
         return (bt ? "●" : "○") + " Bluetooth    " + (elm ? "●" : "○") + " ELM    " + (protocol ? "●" : "○") + " Protocolo\n" +
@@ -474,7 +479,7 @@ public class MainActivity extends Activity {
 
     void add(String s) {
         session.append(s).append("\n\n");
-        runOnUiThread(() -> { if (logText != null) logText.append(s + "\n\n"); });
+        runOnUiThread(() -> { if (logBox != null) logBox.append(s + "\n\n"); });
     }
 
     String report() {
@@ -521,19 +526,22 @@ public class MainActivity extends Activity {
         try {
             test = "Conectando BT"; refresh();
             if (!perm()) return;
-            BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
-            if (a == null) { add("Sin Bluetooth"); return; }
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (adapter == null) { add("Sin Bluetooth"); return; }
+            Set<BluetoothDevice> bonded = adapter.getBondedDevices();
             device = null;
-            for (BluetoothDevice d : a.getBondedDevices()) {
-                String n = d.getName() == null ? "" : d.getName().toLowerCase();
-                if (device == null || n.contains("obd") || n.contains("elm")) device = d;
+            for (BluetoothDevice d : bonded) {
+                String name = d.getName() == null ? "" : d.getName().toLowerCase();
+                if (device == null || name.contains("obd") || name.contains("elm") || name.contains("vlink") || name.contains("icar")) device = d;
             }
             if (device == null) { add("Empareja ELM"); return; }
             close();
             socket = device.createRfcommSocketToServiceRecord(SPP);
             socket.connect();
-            in = socket.getInputStream(); out = socket.getOutputStream();
-            bt = true; test = "BT OK";
+            in = socket.getInputStream();
+            out = socket.getOutputStream();
+            bt = true;
+            test = "BT OK";
             add("BT OK: " + device.getName() + " / " + device.getAddress());
             refresh();
         } catch (Exception e) {
@@ -545,15 +553,23 @@ public class MainActivity extends Activity {
 
     void close() { try { if (socket != null) socket.close(); } catch (Exception ignored) {} socket = null; in = null; out = null; }
     boolean ready() { if (socket == null || !socket.isConnected() || in == null || out == null) { add("Pulsa conectar primero"); return false; } return true; }
-    void initElm() { runCmds(new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH1", "ATI", "ATRV", "ATSP0", "ATDP", "ATDPN"}, "INIT ELM"); elm = true; refresh(); }
-    void readEngine() { runCmds(new String[]{"0120", "010C", "010C", "0105", "010D", "010B", "010F", "0110"}, "MOTOR"); engine = true; refresh(); }
 
-    void runCmds(String[] cs, String name) {
+    void initElm() {
+        runCmds(new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH1", "ATI", "ATRV", "ATSP0", "ATDP", "ATDPN"}, "INIT ELM");
+        elm = true; refresh();
+    }
+
+    void readEngine() {
+        runCmds(new String[]{"0120", "010C", "010C", "0105", "010D", "010B", "010F", "0110"}, "MOTOR");
+        engine = true; refresh();
+    }
+
+    void runCmds(String[] commands, String name) {
         try {
             if (!ready()) return;
             test = name; refresh();
             add("===== " + name + " =====");
-            for (String c : cs) send(c);
+            for (String c : commands) send(c);
             if (name.contains("DTC")) dtcOk = true;
             if (name.contains("PROTOCOLO")) protocol = true;
             test = name + " terminado";
@@ -565,7 +581,8 @@ public class MainActivity extends Activity {
     }
 
     void send(String c) throws Exception {
-        out.write((c + "\r").getBytes("US-ASCII")); out.flush();
+        out.write((c + "\r").getBytes("US-ASCII"));
+        out.flush();
         Thread.sleep(c.equals("ATZ") ? 1700 : 1000);
         String r = read();
         add("> " + c + "\n" + r);
@@ -574,9 +591,14 @@ public class MainActivity extends Activity {
     }
 
     String read() throws Exception {
-        byte[] b = new byte[512]; StringBuilder s = new StringBuilder(); long end = System.currentTimeMillis() + 1600;
+        byte[] buffer = new byte[512];
+        StringBuilder s = new StringBuilder();
+        long end = System.currentTimeMillis() + 1600;
         while (System.currentTimeMillis() < end) {
-            while (in.available() > 0) { int n = in.read(b); if (n > 0) s.append(new String(b, 0, n, "US-ASCII")); }
+            while (in.available() > 0) {
+                int n = in.read(buffer);
+                if (n > 0) s.append(new String(buffer, 0, n, "US-ASCII"));
+            }
             if (s.toString().contains(">")) break;
             Thread.sleep(60);
         }
@@ -588,14 +610,16 @@ public class MainActivity extends Activity {
         try {
             if (cmd.equals("ATRV")) volts = r.replace(">", "").trim();
             if (cmd.equals("ATDP")) proto = r.replace(">", "").trim();
-            String h = r.replace(" ", "").replace(">", ""); int i;
-            if ((i = h.indexOf("410C")) >= 0) { int a = Integer.parseInt(h.substring(i+4,i+6),16), b = Integer.parseInt(h.substring(i+6,i+8),16); rpm = ((a*256)+b)/4; }
-            if ((i = h.indexOf("4105")) >= 0) temp = Integer.parseInt(h.substring(i+4,i+6),16)-40;
-            if ((i = h.indexOf("410D")) >= 0) speed = Integer.parseInt(h.substring(i+4,i+6),16);
-            if ((i = h.indexOf("410B")) >= 0) map = Integer.parseInt(h.substring(i+4,i+6),16);
-            if ((i = h.indexOf("410F")) >= 0) iat = Integer.parseInt(h.substring(i+4,i+6),16)-40;
-            if ((i = h.indexOf("4110")) >= 0) { int a = Integer.parseInt(h.substring(i+4,i+6),16), b = Integer.parseInt(h.substring(i+6,i+8),16); maf = ((a*256)+b)/100.0; }
-            if (h.contains("430401")) dtc = "P0401 EGR insuficiente"; else if (h.contains("43")) dtc = "DTC RAW";
+            String h = r.replace(" ", "").replace(">", "");
+            int i;
+            if ((i = h.indexOf("410C")) >= 0) { int a = Integer.parseInt(h.substring(i+4, i+6),16), b = Integer.parseInt(h.substring(i+6, i+8),16); rpm = ((a*256)+b)/4; }
+            if ((i = h.indexOf("4105")) >= 0) temp = Integer.parseInt(h.substring(i+4, i+6),16)-40;
+            if ((i = h.indexOf("410D")) >= 0) speed = Integer.parseInt(h.substring(i+4, i+6),16);
+            if ((i = h.indexOf("410B")) >= 0) map = Integer.parseInt(h.substring(i+4, i+6),16);
+            if ((i = h.indexOf("410F")) >= 0) iat = Integer.parseInt(h.substring(i+4, i+6),16)-40;
+            if ((i = h.indexOf("4110")) >= 0) { int a = Integer.parseInt(h.substring(i+4, i+6),16), b = Integer.parseInt(h.substring(i+6, i+8),16); maf = ((a*256)+b)/100.0; }
+            if (h.contains("430401")) dtc = "P0401 EGR insuficiente";
+            else if (h.contains("43")) dtc = "DTC RAW";
         } catch (Exception ignored) {}
     }
 }
