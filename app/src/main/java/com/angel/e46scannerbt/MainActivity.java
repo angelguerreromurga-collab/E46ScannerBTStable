@@ -6,6 +6,7 @@ import android.bluetooth.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.*;
 import android.view.Gravity;
 import android.widget.*;
@@ -20,36 +21,54 @@ public class MainActivity extends Activity {
     StringBuilder session = new StringBuilder();
     int rpm=-1,temp=-999,speed=-1,map=-1,iat=-999; double maf=-1; String volts="--", proto="--", lastDtc="--", lastTest="LISTO";
     static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-    final int BG=Color.rgb(3,7,13), CARD=Color.rgb(14,20,30), BLUE=Color.rgb(0,122,255), TXT=Color.WHITE, MUTED=Color.rgb(160,168,178), GREEN=Color.rgb(40,210,120), RED=Color.rgb(255,75,85);
+    final int BG=Color.rgb(2,6,12), CARD=Color.rgb(12,19,29), CARD2=Color.rgb(18,27,40), BLUE=Color.rgb(0,122,255), TXT=Color.WHITE, MUTED=Color.rgb(156,164,176), GREEN=Color.rgb(40,220,120);
 
     protected void onCreate(Bundle b){ super.onCreate(b); stampSession(); showHome(); }
     void stampSession(){ session.append("BMW E46 SCANNER SESSION\n").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.US).format(new Date())).append("\nCar: BMW E46 coupe 320d/320Cd M47N\nMode: READ ONLY\n\n"); }
 
-    void base(String title){ main=new LinearLayout(this); main.setOrientation(LinearLayout.VERTICAL); main.setPadding(22,50,22,10); main.setBackgroundColor(BG); TextView bar=tv("☰    "+title+"  E46",21,TXT,false); status=tv(stateText(),14,Color.rgb(120,200,255),false); main.addView(bar); main.addView(status); setContentView(main); }
-    String stateText(){ return "● "+lastTest+" · BT "+(socket!=null&&socket.isConnected()?"OK":"OFF")+" · "+proto+" · "+volts; }
+    void base(String title){
+        main=new LinearLayout(this); main.setOrientation(LinearLayout.VERTICAL); main.setPadding(24,46,24,10); main.setBackgroundColor(BG);
+        TextView top=tv("☰     "+title+" ",21,TXT,false); top.append("E46");
+        status=tv(stateText(),14,Color.rgb(110,200,255),false);
+        main.addView(top); main.addView(status); setContentView(main);
+    }
+    String stateText(){ return "↯ "+lastTest+"   BT "+(socket!=null&&socket.isConnected()?"CONECTADO":"OFF")+"   "+proto+"   "+volts; }
     void refresh(){ if(status!=null) runOnUiThread(() -> status.setText(stateText())); if(live!=null) runOnUiThread(() -> live.setText(liveText())); }
-    String liveText(){ return "RPM  "+val(rpm,"rpm")+"\nRefrigerante  "+val(temp,"°C")+"\nMAP  "+val(map,"kPa")+"     MAF  "+(maf<0?"--":String.format(Locale.US,"%.2f g/s",maf))+"\nVelocidad  "+val(speed,"km/h")+"     IAT  "+val(iat,"°C")+"\nDTC  "+lastDtc; }
+    String liveText(){ return "RPM  "+val(rpm,"rpm")+"     TEMP  "+val(temp,"°C")+"\nMAP  "+val(map,"kPa")+"     MAF  "+(maf<0?"--":String.format(Locale.US,"%.2f g/s",maf))+"\nVEL  "+val(speed,"km/h")+"     IAT  "+val(iat,"°C")+"\nDTC  "+lastDtc; }
     String val(int v,String u){ return v<-100||v<0?"--":v+" "+u; }
 
-    void showHome(){ base("Coding Lab"); main.addView(tv("✓ Conectado\nBMW E46 320d M47N\nVIN: pendiente de lectura",15,GREEN,false)); live=box(liveText(),15); main.addView(live); main.addView(card("🔧  Coding Lab", "Funciones de confort y personalización", () -> showCoding())); main.addView(card("💡  Luces", "Iluminación exterior e interior", () -> showLights())); main.addView(card("🪟  Ventanillas", "Funciones de confort de ventanas", () -> showWindows())); main.addView(card("🧪  Diagnóstico", "Leer errores y estado de módulos", () -> showDiag())); main.addView(card("📋  Logs", "Registros y sesiones guardadas", () -> showLogs())); main.addView(nav()); }
-    TextView nav(){ return tv("⌂ Inicio        ◇ Módulos        ≡ Logs        ⚙ Ajustes",13,Color.rgb(180,190,205),true); }
-    TextView card(String a,String b, final Runnable r){ TextView v=box(a+"\n"+b,17); v.setOnClickListener(x -> r.run()); return v; }
-    TextView box(String s,int size){ TextView v=tv(s,size,TXT,false); v.setBackgroundColor(CARD); v.setPadding(18,14,18,14); return v; }
+    void showHome(){
+        base("Coding Lab");
+        main.addView(hero());
+        main.addView(section("MENÚ PRINCIPAL"));
+        main.addView(menu("🔧", "Coding Lab", "Funciones de confort y personalización", () -> showCoding()));
+        main.addView(menu("💡", "Luces", "Iluminación exterior e interior", () -> showLights()));
+        main.addView(menu("▭", "Ventanillas", "Funciones de confort de ventanas", () -> showWindows()));
+        main.addView(menu("🟢", "Diagnóstico", "Leer errores y estado de módulos", () -> showDiag()));
+        main.addView(menu("ⓘ", "Información del coche", "Detalles del vehículo y módulos", () -> showInfo()));
+        main.addView(menu("▤", "Logs", "Registros y sesiones guardadas", () -> showLogs()));
+        main.addView(nav());
+    }
+    TextView hero(){ TextView h=panel("✓ Conectado\nBMW E46 320d M47N\nVIN: pendiente\n\n        ▄▄▄ BMW E46 COUPÉ ▄▄▄\n\n"+liveText(),15); h.setTextColor(Color.rgb(235,240,248)); return h; }
+    TextView nav(){ TextView n=tv("⌂ Inicio          ◇ Módulos          ≡ Logs          ⚙ Ajustes",13,Color.rgb(180,190,205),true); n.setBackgroundColor(Color.rgb(5,10,18)); return n; }
+    TextView menu(String icon,String title,String sub, final Runnable r){ TextView v=panel(icon+"   "+title+"        ›\n     "+sub,17); v.setOnClickListener(x -> r.run()); return v; }
+    TextView panel(String s,int size){ TextView v=tv(s,size,TXT,false); v.setBackground(cardBg(CARD,18,Color.rgb(28,42,60))); v.setPadding(18,15,18,15); return v; }
+    GradientDrawable cardBg(int color,int radius,int stroke){ GradientDrawable g=new GradientDrawable(); g.setColor(color); g.setCornerRadius(radius); g.setStroke(1,stroke); return g; }
     TextView tv(String s,int size,int color,boolean center){ TextView v=new TextView(this); v.setText(s); v.setTextSize(size); v.setTextColor(color); v.setPadding(0,7,0,9); if(center)v.setGravity(Gravity.CENTER); return v; }
     TextView section(String s){ return tv("\n"+s,13,MUTED,false); }
-    Button btn(String s, final Runnable r){ Button b=new Button(this); b.setText(s); b.setTextSize(15); b.setAllCaps(false); b.setOnClickListener(v -> new Thread(r).start()); return b; }
-    Switch sw(String title,String sub,boolean on){ Switch s=new Switch(this); s.setText(title+"\n"+sub); s.setTextColor(TXT); s.setTextSize(15); s.setChecked(on); s.setEnabled(false); return s; }
-    void back(){ main.addView(btn("← Atrás", () -> runOnUiThread(() -> showHome()))); }
-    void addBox(){ log=tv("",13,Color.rgb(225,232,240),false); log.setPadding(16,16,16,16); ScrollView sv=new ScrollView(this); sv.setBackgroundColor(Color.rgb(10,15,23)); sv.addView(log); main.addView(sv,new LinearLayout.LayoutParams(-1,0,1)); }
+    TextView action(String s, final Runnable r){ TextView v=panel(s,15); v.setGravity(Gravity.CENTER); v.setOnClickListener(x -> new Thread(r).start()); return v; }
+    Switch sw(String title,String sub,boolean on){ Switch s=new Switch(this); s.setText(title+"\n"+sub); s.setTextColor(TXT); s.setTextSize(15); s.setChecked(on); s.setEnabled(false); s.setBackground(cardBg(CARD,14,Color.rgb(28,42,60))); s.setPadding(16,12,16,12); return s; }
+    void back(){ main.addView(action("← Atrás", () -> runOnUiThread(() -> showHome()))); }
+    void addBox(){ log=tv("",13,Color.rgb(225,232,240),false); log.setPadding(16,16,16,16); ScrollView sv=new ScrollView(this); sv.setBackground(cardBg(Color.rgb(8,13,21),10,Color.rgb(18,30,45))); sv.addView(log); main.addView(sv,new LinearLayout.LayoutParams(-1,0,1)); }
     void stat(String s){ lastTest=s; runOnUiThread(() -> status.setText(stateText())); }
     void add(String s){ session.append(s).append("\n\n"); runOnUiThread(() -> { if(log!=null) log.append(s+"\n\n"); }); }
 
-    void showCoding(){ base("Coding Lab"); back(); main.addView(section("LUCES   VENTANILLAS   CONFORT   OTROS")); main.addView(box("ⓘ Personaliza el comportamiento de funciones OEM. Escritura bloqueada hasta backup real.",14)); main.addView(section("OBJETIVOS")); main.addView(sw("LSZ check frío posición LED", "KALTUEBERWACHUNG_SL_*", true)); main.addView(sw("LSZ check caliente posición LED", "WARMUEBERWACHUNG_SL_*", true)); main.addView(sw("GM5 cierre confort mando", "KOMFORTSCHLIESSUNG_FB", true)); main.addView(sw("Blink al abrir", "QUIT_BLK_ENTSCH", true)); main.addView(btn("Generar informe objetivos", () -> add("OBJETIVOS CODING: LSZ LED cold/warm, GM5 comfort close, blink unlock. Escritura bloqueada."))); main.addView(btn("Compartir sesión", () -> shareSession())); addBox(); }
-    void showLights(){ base("Luces"); back(); main.addView(section("LED / CHECK")); main.addView(sw("Check frío posición", "parpadeo al contacto", true)); main.addView(sw("Check caliente posición", "aviso fijo en cuadro", true)); main.addView(sw("Blink cerrar", "funciona", true)); main.addView(sw("Blink abrir", "pendiente", false)); main.addView(btn("Test DTC ahora", () -> { connect(); initElm(); runCmds(new String[]{"03","07"},"DTC"); })); addBox(); }
-    void showWindows(){ base("Ventanillas"); back(); main.addView(section("CIERRE CON MANDO")); main.addView(sw("Cerrar delanteras manteniendo cerrar", "funciona", true)); main.addView(sw("Cerrar traseras manteniendo cerrar", "objetivo GM5", false)); main.addView(sw("Doble clic para cerrar traseras", "experimental", false)); main.addView(section("APERTURA CON MANDO")); main.addView(sw("Abrir cuatro manteniendo abrir", "funciona", true)); main.addView(sw("Doble clic abrir traseras", "pendiente", false)); main.addView(btn("Registrar baseline", () -> add("BASELINE VENTANILLAS: abrir mando abre 4; cerrar mando solo delanteras; traseras coupe no cierran; sin techo."))); addBox(); }
-    void showDiag(){ base("Diagnóstico"); back(); live=box(liveText(),15); main.addView(live); main.addView(section("TESTS EN DIRECTO")); main.addView(btn("1 · Conectar ELM327", () -> connect())); main.addView(btn("2 · Inicializar ELM", () -> initElm())); main.addView(btn("3 · Leer y decodificar motor", () -> readEngine())); main.addView(btn("4 · Leer DTC traducidos", () -> runCmds(new String[]{"03","07"},"DTC"))); main.addView(btn("5 · Test protocolo seguro", () -> runCmds(new String[]{"ATDP","ATDPN","0100"},"PROTOCOLO"))); main.addView(btn("Compartir sesión completa", () -> shareSession())); main.addView(btn("Limpiar log", () -> runOnUiThread(() -> log.setText("")))); addBox(); }
-    void showLogs(){ base("Logs"); back(); main.addView(btn("Compartir sesión completa", () -> shareSession())); main.addView(btn("Añadir resumen decodificado", () -> add("RESUMEN:\n"+liveText()))); addBox(); add("LOG READY. Usa Compartir sesión completa."); }
-    void showInfo(){ base("Ajustes"); back(); main.addView(box("BMW E46 coupe/restyling 320d/320Cd M47N\nELM327 v2.1 detectado\nATSP0 principal\nNo usar ATSP3/4/5 agresivo\nModo seguro: solo lectura",15)); main.addView(btn("Compartir sesión", () -> shareSession())); }
+    void showCoding(){ base("Coding Lab"); back(); main.addView(section("LUCES      VENTANILLAS      CONFORT      OTROS")); main.addView(panel("ⓘ  Personaliza funciones OEM. Escritura bloqueada hasta backup real.",14)); main.addView(section("OBJETIVOS")); main.addView(sw("LSZ check frío posición LED", "KALTUEBERWACHUNG_SL_*", true)); main.addView(sw("LSZ check caliente posición LED", "WARMUEBERWACHUNG_SL_*", true)); main.addView(sw("GM5 cierre confort mando", "KOMFORTSCHLIESSUNG_FB", true)); main.addView(sw("Blink al abrir", "QUIT_BLK_ENTSCH", true)); main.addView(action("Generar informe objetivos", () -> add("OBJETIVOS CODING: LSZ LED cold/warm, GM5 comfort close, blink unlock. Escritura bloqueada."))); main.addView(action("Guardar / compartir sesión", () -> shareSession())); addBox(); }
+    void showLights(){ base("Luces"); back(); main.addView(section("LED / CHECK")); main.addView(sw("Check frío posición", "parpadeo al contacto", true)); main.addView(sw("Check caliente posición", "aviso fijo en cuadro", true)); main.addView(sw("Blink cerrar", "funciona", true)); main.addView(sw("Blink abrir", "pendiente", false)); main.addView(action("Test DTC ahora", () -> { connect(); initElm(); runCmds(new String[]{"03","07"},"DTC"); })); addBox(); }
+    void showWindows(){ base("Ventanillas"); back(); main.addView(section("CIERRE CON MANDO")); main.addView(sw("Cerrar delanteras manteniendo cerrar", "funciona", true)); main.addView(sw("Cerrar traseras manteniendo cerrar", "objetivo GM5", false)); main.addView(sw("Doble clic para cerrar traseras", "experimental", false)); main.addView(section("APERTURA CON MANDO")); main.addView(sw("Abrir cuatro manteniendo abrir", "funciona", true)); main.addView(sw("Doble clic abrir traseras", "pendiente", false)); main.addView(action("Registrar baseline", () -> add("BASELINE VENTANILLAS: abrir mando abre 4; cerrar mando solo delanteras; traseras coupe no cierran; sin techo."))); addBox(); }
+    void showDiag(){ base("Diagnóstico"); back(); live=panel(liveText(),15); main.addView(live); main.addView(section("TESTS EN DIRECTO")); main.addView(action("1 · Conectar ELM327", () -> connect())); main.addView(action("2 · Inicializar ELM", () -> initElm())); main.addView(action("3 · Leer y decodificar motor", () -> readEngine())); main.addView(action("4 · Leer DTC traducidos", () -> runCmds(new String[]{"03","07"},"DTC"))); main.addView(action("5 · Test protocolo seguro", () -> runCmds(new String[]{"ATDP","ATDPN","0100"},"PROTOCOLO"))); main.addView(action("Compartir sesión completa", () -> shareSession())); main.addView(action("Limpiar log", () -> runOnUiThread(() -> log.setText("")))); addBox(); }
+    void showLogs(){ base("Logs"); back(); main.addView(action("Compartir sesión completa", () -> shareSession())); main.addView(action("Añadir resumen decodificado", () -> add("RESUMEN:\n"+liveText()))); addBox(); add("LOG READY. Usa Compartir sesión completa."); }
+    void showInfo(){ base("Ajustes"); back(); main.addView(panel("BMW E46 50 JAHRE EDITION\n✓ M47N 320d/320Cd\n✓ ELM327 v2.1 detectado\n✓ ATSP0 principal\n✓ Modo seguro: solo lectura\n✓ Diseño orientado a confort y personalización OEM",15)); main.addView(action("Compartir sesión", () -> shareSession())); }
 
     void shareSession(){ try{ Intent i=new Intent(Intent.ACTION_SEND); i.setType("text/plain"); i.putExtra(Intent.EXTRA_SUBJECT,"BMW E46 Scanner Session"); i.putExtra(Intent.EXTRA_TEXT,session.toString()); startActivity(Intent.createChooser(i,"Enviar sesión")); }catch(Exception e){ add("ERROR SHARE: "+e.getMessage()); }}
     boolean perm(){ if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED){ runOnUiThread(() -> requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT},46)); stat("Permiso Bluetooth solicitado"); return false;} return true; }
