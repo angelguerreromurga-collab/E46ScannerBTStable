@@ -33,9 +33,7 @@ public class MainActivity extends Activity {
 
     static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     final int BG = Color.rgb(1, 5, 11);
-    final int BG2 = Color.rgb(3, 9, 17);
     final int CARD = Color.rgb(8, 15, 25);
-    final int CARD2 = Color.rgb(12, 22, 35);
     final int LINE = Color.rgb(26, 44, 66);
     final int TXT = Color.WHITE;
     final int MUTED = Color.rgb(150, 160, 174);
@@ -83,8 +81,7 @@ public class MainActivity extends Activity {
     }
 
     GradientDrawable gradient() {
-        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(2, 8, 15), BG});
-        return g;
+        return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(2, 8, 15), BG});
     }
 
     void shell(String title, boolean bottomActions, int activeTab) {
@@ -97,10 +94,9 @@ public class MainActivity extends Activity {
         root.addView(statusStrip, new LinearLayout.LayoutParams(-1, dp(4)));
 
         ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(false);
         body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
-        body.setPadding(dp(22), dp(20), dp(22), dp(10));
+        body.setPadding(dp(22), dp(18), dp(22), dp(10));
         scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
@@ -187,28 +183,36 @@ public class MainActivity extends Activity {
     void showHome() {
         shell("Coding Lab E46", false, -1);
 
-        LinearLayout hero = card();
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(10), dp(4), dp(10), dp(10));
+        hero.setBackground(bg(Color.rgb(4, 10, 18), 18, Color.rgb(14, 25, 40)));
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
+        hp.setMargins(0, dp(4), 0, dp(8));
+        hero.setLayoutParams(hp);
+
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
+        top.setPadding(dp(6), dp(8), dp(6), 0);
 
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
-        TextView btLabel = text("Bluetooth", 12, MUTED, false);
-        TextView btStatus = text(bt ? "Conectado" : "Desconectado", 16, bt ? GREEN : AMBER, true);
-        TextView carName = text("BMW E46 320d M47N", 17, TXT, true);
-        TextView vinText = text("VIN: " + vin, 13, MUTED, false);
-        info.addView(btLabel); info.addView(btStatus); info.addView(carName); info.addView(vinText);
+        info.addView(text("Bluetooth", 12, MUTED, false));
+        info.addView(text(bt ? "Conectado" : "Desconectado", 16, bt ? GREEN : AMBER, true));
+        info.addView(text("BMW E46 320d M47N", 16, TXT, true));
+        info.addView(text("VIN: " + vin, 12, MUTED, false));
         top.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
-
-        ImageView img = new ImageView(this);
-        img.setImageResource(getResources().getIdentifier("car_e46_side", "drawable", getPackageName()));
-        img.setAdjustViewBounds(true);
-        top.addView(img, new LinearLayout.LayoutParams(dp(200), dp(96)));
         hero.addView(top);
 
-        liveCard = text(live(), 13, Color.rgb(220, 230, 242), false);
-        liveCard.setPadding(0, dp(10), 0, 0);
+        ImageView img = new ImageView(this);
+        img.setImageResource(getResources().getIdentifier("bmw_e46_black_coupe_hero", "drawable", getPackageName()));
+        img.setAdjustViewBounds(true);
+        img.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        hero.addView(img, new LinearLayout.LayoutParams(-1, dp(145)));
+
+        liveCard = text(live(), 12, Color.rgb(220, 230, 242), false);
+        liveCard.setPadding(dp(6), 0, 0, 0);
         hero.addView(liveCard);
         body.addView(hero);
 
