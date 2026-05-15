@@ -43,4 +43,28 @@ UI REQUIREMENTS
 - Backup screen must clearly say read only
 - Session export must stay available
 
+BACKUP PROCEDURE V1
+1. Connect ELM327 through paired Bluetooth SPP.
+2. Initialize ELM conservatively.
+3. Read adapter ID and voltage.
+4. Confirm protocol with ATDP and ATDPN.
+5. Read PID support pages.
+6. Read live engine baseline.
+7. Read stored, pending and permanent DTC.
+8. Export full session before any coding attempt.
+
+FUTURE MODULE PLAN
+- GM5 comfort functions only after module-specific communication is proven.
+- LSZ LED cold/warm monitoring only after proper backup method exists.
+- No raw write commands from UI until safe write gate, checksum and rollback exist.
+- Every write target must show current value, proposed value and backup state.
+- If voltage drops below safe threshold, write must be blocked.
+
+ELM327 V2.1 LIMITATIONS
+- Many v2.1 clones misreport capability.
+- Some delayed responses arrive mixed with next command.
+- Parser must scan whole response for 41xx payloads, not only expected command.
+- SEARCHING followed by next response is not necessarily failure.
+- ATSP3/4/5 can destabilize cheap adapter; use safe protocol test first.
+
 This file intentionally increases APK content size and acts as embedded documentation for the app.
