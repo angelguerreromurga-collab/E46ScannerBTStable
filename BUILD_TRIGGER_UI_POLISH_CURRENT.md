@@ -1,19 +1,32 @@
-# Build trigger for current UI polish
+# Build trigger for V4.3 final visual polish
 
-This file intentionally creates a new commit after the latest UI polish changes so GitHub Actions can generate a fresh APK artifact.
+This commit intentionally triggers GitHub Actions after the latest premium visual pass.
 
-Included UI polish up to this point:
+Included visual polish:
 
-- Premium navigation and layout.
-- Busy state.
-- Anti double tap.
-- Active bottom navigation.
-- Internal screen sections.
-- Improved information and logs screens.
-- Timestamped logs.
-- Clear visual log action.
-- Current UI acceptance checklist.
+- Reduced visual noise.
+- Softer card borders.
+- Cleaner header.
+- Compact status pill.
+- Hero with dedicated car image area.
+- ImageView integration for `bmw_e46_user_hero`.
+- Smaller premium quick chips.
+- Home menu without cheap Unicode icons.
+- Accent bars instead of noisy icons.
+- Reduced Home clutter.
+- Safe mode and no-write guard remain active.
 
-Expected artifact name remains:
+Expected artifact name:
 
 `E46ScannerBT-V4.2-premium-decoded-diagnostics-debug-apk`
+
+Validation priority:
+
+1. APK compiles.
+2. App opens without crash.
+3. Home does not visually reject at first glance.
+4. Hero does not overlap text.
+5. Car image is centered and contained.
+6. Chips are not cut.
+7. Bottom navigation remains usable.
+8. Backup, Tests, Diagnostics and Logs still work.
