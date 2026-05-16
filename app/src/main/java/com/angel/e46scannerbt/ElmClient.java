@@ -78,6 +78,9 @@ public class ElmClient {
     }
 
     public String run(String title, String[] commands) {
+        if (!SafeCommandBatch.isAllowed(commands)) {
+            return "BLOQUEADO POR SEGURIDAD: " + title + "\n" + SafeCommandBatch.report(commands) + "\n" + SafeCommandBatch.firstBlockedReason(commands);
+        }
         if (!isConnected()) {
             String c = connect();
             if (!isConnected()) return c;
