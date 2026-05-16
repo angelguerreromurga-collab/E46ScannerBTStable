@@ -30,6 +30,9 @@ public class SafeCommandPolicy {
         if (c.equals("07")) return true;
         if (c.equals("0A")) return true;
 
+        // BMW KWP read-only module data. Service 21 reads local identifiers; it does not write or erase.
+        if (c.startsWith("21")) return true;
+
         return false;
     }
 
