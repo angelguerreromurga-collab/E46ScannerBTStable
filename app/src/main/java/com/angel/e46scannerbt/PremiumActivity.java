@@ -15,6 +15,7 @@ import android.widget.ScrollView;
 import android.widget.Space;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.content.Intent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,6 +27,7 @@ public class PremiumActivity extends Activity {
     private TextView status;
     private TextView logBox;
     private TextView checklistBox;
+    private ElmClient elmClient;
     private final ArrayList<String> history = new ArrayList<>();
     private final StringBuilder log = new StringBuilder();
 
@@ -38,7 +40,6 @@ public class PremiumActivity extends Activity {
 
     private final int BG = Color.rgb(0, 6, 14);
     private final int BG2 = Color.rgb(2, 13, 25);
-    private final int CARD = Color.rgb(7, 18, 32);
     private final int CARD2 = Color.rgb(8, 20, 36);
     private final int LINE = Color.rgb(25, 49, 78);
     private final int WHITE = Color.WHITE;
@@ -54,6 +55,7 @@ public class PremiumActivity extends Activity {
         super.onCreate(b);
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+        elmClient = new ElmClient(this, this::addLog);
         log.append("BMW E46 SCANNER SESSION\n")
            .append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date()))
            .append("\nSAFE MODE · READ ONLY\n\n");
@@ -109,7 +111,6 @@ public class PremiumActivity extends Activity {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{BG2, BG}));
-
         ScrollView scroll = new ScrollView(this);
         body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
@@ -117,7 +118,6 @@ public class PremiumActivity extends Activity {
         scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
-
         header(title, back);
         if (bottomNav) bottomNav(activeNav);
     }
@@ -125,21 +125,17 @@ public class PremiumActivity extends Activity {
     private void header(String title, boolean back) {
         LinearLayout h = new LinearLayout(this);
         h.setGravity(Gravity.CENTER_VERTICAL);
-
         TextView left = text(back ? "‹" : "☰", 34, WHITE, false);
         left.setGravity(Gravity.CENTER);
         left.setOnClickListener(v -> onBackPressed());
         h.addView(left, new LinearLayout.LayoutParams(dp(44), dp(46)));
-
         TextView mid = text(title, 20, WHITE, false);
         mid.setGravity(Gravity.CENTER);
         h.addView(mid, new LinearLayout.LayoutParams(0, dp(46), 1));
-
         TextView right = text(back ? "▱" : "E46", back ? 22 : 14, back ? WHITE : BLUE, true);
         right.setGravity(Gravity.CENTER);
         h.addView(right, new LinearLayout.LayoutParams(dp(56), dp(46)));
         body.addView(h);
-
         status = text(statusLine(), 11, connected ? GREEN : RED, false);
         status.setGravity(Gravity.CENTER);
         body.addView(status);
@@ -153,29 +149,28 @@ public class PremiumActivity extends Activity {
     }
 
     private void refreshStatus() {
-        if (status != null) {
-            status.setText(statusLine());
-            status.setTextColor(connected ? GREEN : RED);
-        }
-        if (checklistBox != null) checklistBox.setText(checklist());
-        if (logBox != null) logBox.setText(log.toString());
+        runOnUiThread(() -> {
+            if (status != null) {
+                status.setText(statusLine());
+                status.setTextColor(connected ? GREEN : RED);
+            }
+            if (checklistBox != null) checklistBox.setText(checklist());
+            if (logBox != null) logBox.setText(log.toString());
+        });
     }
 
     private void space(int h) { body.addView(new Space(this), new LinearLayout.LayoutParams(1, dp(h))); }
 
     private void showHome() {
         base("Coding Lab E46", false, true, 0);
-
         FrameLayout hero = new FrameLayout(this);
         body.addView(hero, new LinearLayout.LayoutParams(-1, dp(232)));
-
         TextView car = text("", 1, WHITE, false);
         car.setBackgroundResource(getResources().getIdentifier("bmw_e46_black_coupe_hero", "drawable", getPackageName()));
         FrameLayout.LayoutParams carLp = new FrameLayout.LayoutParams(dp(398), dp(176), Gravity.RIGHT | Gravity.TOP);
         carLp.topMargin = dp(6);
         carLp.rightMargin = dp(-8);
         hero.addView(car, carLp);
-
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
         info.setGravity(Gravity.CENTER_VERTICAL);
@@ -186,7 +181,6 @@ public class PremiumActivity extends Activity {
         safe.setPadding(0, dp(5), 0, 0);
         info.addView(safe);
         hero.addView(info, new FrameLayout.LayoutParams(dp(232), -1, Gravity.LEFT));
-
         section("MENÚ PRINCIPAL");
         menu("⌕", "Coding Lab", "Funciones de confort y personalización", BLUE, () -> go("coding", true));
         menu("▣", "Backup seguro", "Guardar estado OBD/ECU antes de pruebas", BLUE, () -> go("backup", true));
@@ -213,22 +207,18 @@ public class PremiumActivity extends Activity {
         row.setPadding(dp(12), 0, dp(10), 0);
         row.setBackground(bg(CARD2, 10));
         row.setOnClickListener(v -> click.run());
-
         TextView ic = text(icon, 26, color, false);
         ic.setGravity(Gravity.CENTER);
         row.addView(ic, new LinearLayout.LayoutParams(dp(62), -1));
-
         LinearLayout tx = new LinearLayout(this);
         tx.setOrientation(LinearLayout.VERTICAL);
         tx.setGravity(Gravity.CENTER_VERTICAL);
         tx.addView(text(title, 16, WHITE, false));
         tx.addView(text(sub, 12, MUTED, false));
         row.addView(tx, new LinearLayout.LayoutParams(0, -1, 1));
-
         TextView arrow = text("›", 30, MUTED, false);
         arrow.setGravity(Gravity.CENTER);
         row.addView(arrow, new LinearLayout.LayoutParams(dp(26), -1));
-
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(64));
         lp.setMargins(0, 0, 0, dp(7));
         body.addView(row, lp);
@@ -239,23 +229,11 @@ public class PremiumActivity extends Activity {
         tabs(activeTab);
         info("Personaliza el comportamiento de las ventanillas y funciones de confort asociadas. Cambios bloqueados hasta Backup seguro.");
         section("CIERRE CON MANDO");
-        group(new String[][]{
-                {"Cerrar ventanillas con mantener pulsado", "Cierra todas las ventanillas al mantener pulsado cerrar.", "1"},
-                {"Cerrar ventanillas traseras con mantener", "Cierra solo las traseras al mantener pulsado cerrar.", "1"},
-                {"Doble clic para cerrar traseras", "Doble clic en cerrar para subir traseras automáticamente.", "1"},
-                {"Doble clic para abrir traseras", "Doble clic en abrir para bajar traseras automáticamente.", "0"}
-        });
+        group(new String[][]{{"Cerrar ventanillas con mantener pulsado","Cierra todas las ventanillas al mantener pulsado cerrar.","1"},{"Cerrar ventanillas traseras con mantener","Cierra solo las traseras al mantener pulsado cerrar.","1"},{"Doble clic para cerrar traseras","Doble clic en cerrar para subir traseras automáticamente.","1"},{"Doble clic para abrir traseras","Doble clic en abrir para bajar traseras automáticamente.","0"}});
         section("APERTURA CON MANDO");
-        group(new String[][]{
-                {"Abrir ventanillas con mantener pulsado", "Abre todas las ventanillas al mantener pulsado abrir.", "1"},
-                {"Doble clic para abrir traseras", "Baja traseras automáticamente.", "1"}
-        });
+        group(new String[][]{{"Abrir ventanillas con mantener pulsado","Abre todas las ventanillas al mantener pulsado abrir.","1"},{"Doble clic para abrir traseras","Baja traseras automáticamente.","1"}});
         section("OTRAS OPCIONES");
-        group(new String[][]{
-                {"Bajar ventanillas al abrir la puerta", "Baja ligeramente la ventanilla del conductor.", "0"},
-                {"Blink unlock", "Intermitentes al abrir con mando.", "0"},
-                {"LED cold/warm check", "Preparado para LSZ. Escritura bloqueada.", "1"}
-        });
+        group(new String[][]{{"Bajar ventanillas al abrir la puerta","Baja ligeramente la ventanilla del conductor.","0"},{"Blink unlock","Intermitentes al abrir con mando.","0"},{"LED cold/warm check","Preparado para LSZ. Escritura bloqueada.","1"}});
         codingBar();
     }
 
@@ -302,7 +280,6 @@ public class PremiumActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(14), dp(7), dp(10), dp(7));
-
         LinearLayout tx = new LinearLayout(this);
         tx.setOrientation(LinearLayout.VERTICAL);
         tx.addView(text(title, 14, WHITE, false));
@@ -310,7 +287,6 @@ public class PremiumActivity extends Activity {
         desc.setMaxLines(2);
         tx.addView(desc);
         row.addView(tx, new LinearLayout.LayoutParams(0, dp(55), 1));
-
         Switch sw = new Switch(this);
         sw.setChecked(checked);
         if (android.os.Build.VERSION.SDK_INT >= 21) {
@@ -319,10 +295,8 @@ public class PremiumActivity extends Activity {
             sw.setTrackTintList(new ColorStateList(states, new int[]{BLUE, Color.rgb(50,65,82)}));
         }
         sw.setOnCheckedChangeListener((b, c) -> {
-            if (!backupDone) {
-                b.setChecked(!c);
-                addLog("BLOQUEADO: primero haz Backup seguro antes de cambiar " + title);
-            } else addLog("SWITCH " + title + " = " + (c ? "ON" : "OFF"));
+            if (!backupDone) { b.setChecked(!c); addLog("BLOQUEADO: primero haz Backup seguro antes de cambiar " + title); }
+            else addLog("SWITCH " + title + " = " + (c ? "ON" : "OFF"));
         });
         row.addView(sw, new LinearLayout.LayoutParams(dp(62), dp(42)));
         return row;
@@ -335,10 +309,7 @@ public class PremiumActivity extends Activity {
         TextView reset = bottomButton("↻  RESTABLECER", false);
         TextView save = bottomButton("▣  GUARDAR CAMBIOS", true);
         reset.setOnClickListener(v -> addLog("Restablecer visual. No se modifican módulos."));
-        save.setOnClickListener(v -> {
-            if (!backupDone) addLog("GUARDAR BLOQUEADO: primero Backup seguro.");
-            else addLog("GUARDAR BLOQUEADO: backup existe, pero escritura real aún está deshabilitada.");
-        });
+        save.setOnClickListener(v -> { if (!backupDone) addLog("GUARDAR BLOQUEADO: primero Backup seguro."); else addLog("GUARDAR BLOQUEADO: backup existe, pero escritura real aún está deshabilitada."); });
         bar.addView(reset, new LinearLayout.LayoutParams(0, dp(52), 1));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(52), 1);
         lp.leftMargin = dp(12);
@@ -358,9 +329,9 @@ public class PremiumActivity extends Activity {
         info("Paso obligatorio. No se permite preparar módulos ni pruebas avanzadas sin backup RAW exportable.");
         checklistBox = card(checklist(), 13);
         body.addView(checklistBox);
-        body.addView(action("1 · Conectar Bluetooth", () -> fakeConnect()));
-        body.addView(action("2 · Inicializar ELM327", () -> fakeElm()));
-        body.addView(action("3 · Backup OBD/ECU READ ONLY", () -> fakeBackup()));
+        body.addView(action("1 · Conectar Bluetooth", () -> realConnect()));
+        body.addView(action("2 · Inicializar ELM327", () -> realElm()));
+        body.addView(action("3 · Backup OBD/ECU READ ONLY", () -> realBackup()));
         body.addView(action("4 · Compartir backup completo", () -> share()));
         logSection();
     }
@@ -371,10 +342,10 @@ public class PremiumActivity extends Activity {
         checklistBox = card(checklist(), 13);
         body.addView(checklistBox);
         section("LECTURA SEGURA");
-        body.addView(action("Test 1 · Conexión + ELM", () -> { fakeConnect(); fakeElm(); }));
-        body.addView(action("Test 2 · Protocolo ISO/KWP", () -> fakeProtocol()));
-        body.addView(action("Test 3 · Motor/PIDs", () -> fakeMotor()));
-        body.addView(action("Test 4 · DTC motor", () -> fakeDtc()));
+        body.addView(action("Test 1 · Conexión + ELM", () -> { realConnect(); realElm(); }));
+        body.addView(action("Test 2 · Protocolo ISO/KWP", () -> realProtocol()));
+        body.addView(action("Test 3 · Motor/PIDs", () -> realMotor()));
+        body.addView(action("Test 4 · DTC motor", () -> realDtc()));
         section("PRUEBAS AVANZADAS");
         body.addView(action("Test 5 · Preparar LSZ LED", () -> guarded("Preparar LSZ LED cold/warm")));
         body.addView(action("Test 6 · Preparar GM5 confort", () -> guarded("Preparar GM5 comfort close / blink")));
@@ -383,30 +354,25 @@ public class PremiumActivity extends Activity {
     }
 
     private String checklist() {
-        return (connected ? "✓" : "□") + " Bluetooth\n"
-                + (elmReady ? "✓" : "□") + " ELM inicializado\n"
-                + (protocolReady ? "✓" : "□") + " Protocolo identificado\n"
-                + (motorRead ? "✓" : "□") + " Motor/PIDs leídos\n"
-                + (dtcRead ? "✓" : "□") + " DTC leídos\n"
-                + (backupDone ? "✓" : "□") + " Backup seguro exportable";
+        return (connected ? "✓" : "□") + " Bluetooth\n" + (elmReady ? "✓" : "□") + " ELM inicializado\n" + (protocolReady ? "✓" : "□") + " Protocolo identificado\n" + (motorRead ? "✓" : "□") + " Motor/PIDs leídos\n" + (dtcRead ? "✓" : "□") + " DTC leídos\n" + (backupDone ? "✓" : "□") + " Backup seguro exportable";
     }
 
-    private void fakeConnect() { connected = true; addLog("BT OK: OBDII / adaptador seleccionado"); refreshStatus(); }
-    private void fakeElm() { elmReady = true; addLog("ELM OK: ATZ / ATE0 / ATL0 / ATS0 / ATH1 / ATSP0"); refreshStatus(); }
-    private void fakeProtocol() { protocolReady = true; addLog("PROTOCOLO OK: AUTO, ISO 9141-2 / KWP"); refreshStatus(); }
-    private void fakeMotor() { motorRead = true; addLog("MOTOR OK: PIDs básicos preparados para lectura real"); refreshStatus(); }
-    private void fakeDtc() { dtcRead = true; addLog("DTC OK: lectura preparada. Sin borrado."); refreshStatus(); }
-    private void fakeBackup() { connected = true; elmReady = true; protocolReady = true; motorRead = true; dtcRead = true; backupDone = true; addLog("BACKUP OK: sesión RAW exportable. No se ha escrito nada."); refreshStatus(); }
+    private void realConnect() { String r = elmClient.connect(); connected = elmClient.isConnected(); addLog(r); refreshStatus(); }
+    private void realElm() { String r = elmClient.initElm(); elmReady = elmClient.isConnected() && !r.contains("ERROR"); addLog(r); refreshStatus(); }
+    private void realProtocol() { String r = elmClient.readProtocol(); protocolReady = elmClient.isConnected() && !r.contains("ERROR"); addLog(r); refreshStatus(); }
+    private void realMotor() { String r = elmClient.readMotor(); motorRead = elmClient.isConnected() && !r.contains("ERROR"); addLog(r); refreshStatus(); }
+    private void realDtc() { String r = elmClient.readDtc(); dtcRead = elmClient.isConnected() && !r.contains("ERROR"); addLog(r); refreshStatus(); }
+    private void realBackup() { String r = elmClient.backupSafe(); connected = elmClient.isConnected(); backupDone = connected && !r.contains("ERROR"); if (backupDone) { elmReady = true; protocolReady = true; motorRead = true; dtcRead = true; } addLog(r + (backupDone ? "\nBACKUP OK: sesión RAW exportable. No se ha escrito nada." : "")); refreshStatus(); }
     private void guarded(String name) { if (!backupDone) addLog("BLOQUEADO: " + name + " requiere Backup seguro. No se modifica nada."); else addLog(name + " listo en SIMULACIÓN. Escritura real deshabilitada."); refreshStatus(); }
 
     private void showDiagnostics() {
         base("Diagnóstico", true, true, 2);
         body.addView(card("RPM --     TEMP --\nMAP --     MAF --\nVEL --     IAT --\nDTC --", 14));
-        body.addView(action("Conectar ELM327", () -> fakeConnect()));
-        body.addView(action("Inicializar ELM", () -> fakeElm()));
-        body.addView(action("Leer motor básico", () -> fakeMotor()));
-        body.addView(action("Leer DTC", () -> fakeDtc()));
-        body.addView(action("Backup seguro READ ONLY", () -> fakeBackup()));
+        body.addView(action("Conectar ELM327", () -> realConnect()));
+        body.addView(action("Inicializar ELM", () -> realElm()));
+        body.addView(action("Leer motor básico", () -> realMotor()));
+        body.addView(action("Leer DTC", () -> realDtc()));
+        body.addView(action("Backup seguro READ ONLY", () -> realBackup()));
         body.addView(action("Compartir sesión completa", () -> share()));
         logSection();
     }
@@ -436,7 +402,7 @@ public class PremiumActivity extends Activity {
         TextView v = card(s, 14);
         v.setGravity(Gravity.CENTER_VERTICAL);
         v.setHeight(dp(52));
-        v.setOnClickListener(x -> r.run());
+        v.setOnClickListener(x -> new Thread(r).start());
         return v;
     }
 
