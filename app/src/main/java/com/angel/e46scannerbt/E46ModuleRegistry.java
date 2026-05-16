@@ -11,14 +11,28 @@ public class E46ModuleRegistry {
                 "LSZ",
                 "LSZ / LCM luces",
                 "ATSH 80 12 F1",
-                new String[]{"ATSH 80 12 F1", "2100", "2101", "2103"}
+                new String[]{
+                        "ATSH 80 12 F1",
+                        "ATSH 80 12 30",
+                        "ATSH 80 12 3F",
+                        "ATSH 80 12 10",
+                        "ATSH 68 12 F1"
+                },
+                new String[]{"2100", "2101", "2103", "1A80", "1A90"}
         ));
 
         modules.put("GM5", new E46ModuleProfile(
                 "GM5",
                 "GM5 / ZKE confort",
-                "ATSH 00 00 F1",
-                new String[]{"ATSH 00 00 F1", "2100", "2101", "2105"}
+                "ATSH 80 00 F1",
+                new String[]{
+                        "ATSH 80 00 F1",
+                        "ATSH 80 00 30",
+                        "ATSH 80 00 3F",
+                        "ATSH 80 00 10",
+                        "ATSH 68 00 F1"
+                },
+                new String[]{"2100", "2101", "2105", "1A80", "1A90"}
         ));
     }
 
