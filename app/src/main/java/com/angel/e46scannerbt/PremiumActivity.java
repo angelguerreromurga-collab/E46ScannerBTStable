@@ -46,6 +46,7 @@ public class PremiumActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
+        if (busy) { addLog("ESPERA: hay una operación en curso."); return; }
         if (history.size() > 1) {
             history.remove(history.size() - 1);
             draw(history.get(history.size() - 1));
@@ -73,6 +74,7 @@ public class PremiumActivity extends Activity {
     private GradientDrawable grad() { return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(3,18,36), BG}); }
 
     private void go(String screen, boolean push) {
+        if (busy) { addLog("ESPERA: termina la operación actual antes de cambiar de pantalla."); return; }
         if (push) history.add(screen); else { history.clear(); history.add(screen); }
         draw(screen);
     }
@@ -129,6 +131,7 @@ public class PremiumActivity extends Activity {
     }
 
     private void runTask(Runnable r) {
+        if (busy) { addLog("ESPERA: operación ya en curso."); return; }
         busy = true; refreshStatus();
         try { r.run(); }
         finally { busy = false; refreshStatus(); }
@@ -165,6 +168,7 @@ public class PremiumActivity extends Activity {
         info.addView(text("BMW E46 320d M47N", 18, WHITE, true));
         info.addView(text("SAFE MODE · READ ONLY", 12, BLUE, true));
         info.addView(text("No escribe sin backup", 12, MUTED, false));
+        info.addView(text("V4.2 · decoded diagnostics", 11, MUTED, false));
         hero.addView(info, new FrameLayout.LayoutParams(dp(238), -1, Gravity.LEFT));
     }
 
@@ -185,13 +189,14 @@ public class PremiumActivity extends Activity {
         smallStatus(row, "BT", connected ? "OK" : "--", connected ? GREEN : RED);
         smallStatus(row, "ELM", elmReady ? "OK" : "--", elmReady ? GREEN : MUTED);
         smallStatus(row, "BACKUP", backupDone ? "OK" : "--", backupDone ? GREEN : MUTED);
+        smallStatus(row, "MODE", "SAFE", BLUE);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(62)); lp.setMargins(0,0,0,dp(6)); body.addView(row, lp);
     }
 
     private void smallStatus(LinearLayout row, String title, String value, int color) {
         LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setGravity(Gravity.CENTER); box.setBackground(bg(Color.rgb(5,17,32), 14));
-        TextView a = text(title, 10, MUTED, true); a.setGravity(Gravity.CENTER); TextView b = text(value, 16, color, true); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1); lp.setMargins(0,0,dp(8),0); row.addView(box, lp);
+        TextView a = text(title, 10, MUTED, true); a.setGravity(Gravity.CENTER); TextView b = text(value, 15, color, true); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1); lp.setMargins(0,0,dp(6),0); row.addView(box, lp);
     }
 
     private void section(String s) { TextView v=text(s,12,MUTED,true); v.setLetterSpacing(0.08f); v.setPadding(0,dp(14),0,dp(8)); body.addView(v); }
@@ -258,10 +263,10 @@ public class PremiumActivity extends Activity {
     private void showLogs(){base("Logs",true,true,2);body.addView(action("Compartir sesión completa",this::share));logSection();}
 
     private TextView card(String s,int sp){TextView v=text(s,sp,WHITE,false);v.setPadding(dp(14),dp(12),dp(14),dp(12));v.setBackground(bg(CARD2,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(8));v.setLayoutParams(lp);return v;}
-    private TextView action(String s,Runnable r){TextView v=card(s,14);v.setGravity(Gravity.CENTER_VERTICAL);v.setHeight(dp(54));v.setOnClickListener(x->new Thread(()->runTask(r)).start());return v;}
+    private TextView action(String s,Runnable r){TextView v=card(s + "    ›",14);v.setGravity(Gravity.CENTER_VERTICAL);v.setHeight(dp(54));v.setOnClickListener(x->{ if(busy){addLog("ESPERA: operación ya en curso.");return;} new Thread(()->runTask(r)).start();});return v;}
     private void logSection(){logBox=card(log.toString(),12);body.addView(logBox,new LinearLayout.LayoutParams(-1,dp(245)));}
     private void addLog(String s){log.append(s).append("\n\n");refreshStatus();}
 
-    private void bottomNav(int active){LinearLayout nav=new LinearLayout(this);nav.setBackgroundColor(Color.rgb(1,8,16));String[] labels={"⌂\nInicio","◇\nMódulos","▤\nLogs","⚙\nAjustes"};Runnable[] actions={()->go("home",false),()->go("coding",true),()->go("logs",true),()->go("info",true)};for(int i=0;i<4;i++){final int idx=i;TextView v=text(labels[i],12,i==active?BLUE:MUTED,false);v.setGravity(Gravity.CENTER);v.setOnClickListener(x->actions[idx].run());nav.addView(v,new LinearLayout.LayoutParams(0,dp(62),1));}root.addView(nav,new LinearLayout.LayoutParams(-1,dp(66)));}
+    private void bottomNav(int active){LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(6),dp(4),dp(6),dp(4));nav.setBackgroundColor(Color.rgb(1,8,16));String[] labels={"⌂\nInicio","◇\nMódulos","▤\nLogs","⚙\nAjustes"};Runnable[] actions={()->go("home",false),()->go("coding",true),()->go("logs",true),()->go("info",true)};for(int i=0;i<4;i++){final int idx=i;TextView v=text(labels[i],12,i==active?BLUE:MUTED,i==active);v.setGravity(Gravity.CENTER);if(i==active)v.setBackground(bg(Color.rgb(4,16,30),16));v.setOnClickListener(x->actions[idx].run());LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(58),1);lp.setMargins(dp(3),0,dp(3),0);nav.addView(v,lp);}root.addView(nav,new LinearLayout.LayoutParams(-1,dp(66)));}
     private void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_SUBJECT,"BMW E46 Scanner Session");i.putExtra(Intent.EXTRA_TEXT,log.toString());startActivity(Intent.createChooser(i,"Enviar sesión"));}
 }
