@@ -9,6 +9,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Space;
@@ -30,8 +31,8 @@ public class PremiumActivity extends Activity {
 
     private boolean connected=false, elmReady=false, protocolReady=false, motorRead=false, dtcRead=false, backupDone=false, busy=false;
 
-    private final int BG=Color.rgb(0,6,14), BG2=Color.rgb(2,13,25), CARD=Color.rgb(7,18,32), CARD2=Color.rgb(9,23,42), LINE=Color.rgb(25,55,90);
-    private final int WHITE=Color.WHITE, MUTED=Color.rgb(168,181,201), BLUE=Color.rgb(0,122,255), GREEN=Color.rgb(42,225,112), RED=Color.rgb(255,70,90), YELLOW=Color.rgb(245,205,50), PURPLE=Color.rgb(160,90,255);
+    private final int BG=Color.rgb(0,6,14), CARD=Color.rgb(5,14,26), CARD2=Color.rgb(7,17,31), LINE=Color.rgb(13,31,52);
+    private final int WHITE=Color.WHITE, MUTED=Color.rgb(155,170,192), BLUE=Color.rgb(0,122,255), GREEN=Color.rgb(42,225,112), RED=Color.rgb(255,70,90), YELLOW=Color.rgb(245,205,50), PURPLE=Color.rgb(160,90,255);
 
     @Override public void onCreate(Bundle b) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -50,9 +51,7 @@ public class PremiumActivity extends Activity {
         if (history.size() > 1) {
             history.remove(history.size() - 1);
             draw(history.get(history.size() - 1));
-        } else {
-            if (!"home".equals(current())) go("home", false);
-        }
+        } else if (!"home".equals(current())) go("home", false);
     }
 
     private String current() { return history.size() == 0 ? "home" : history.get(history.size() - 1); }
@@ -71,7 +70,7 @@ public class PremiumActivity extends Activity {
         return g;
     }
 
-    private GradientDrawable grad() { return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(3,18,36), BG}); }
+    private GradientDrawable grad() { return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[]{Color.rgb(2,14,28), BG}); }
 
     private void go(String screen, boolean push) {
         if (busy) { addLog("ESPERA: termina la operación actual antes de cambiar de pantalla."); return; }
@@ -94,7 +93,7 @@ public class PremiumActivity extends Activity {
     private void base(String title, boolean back, boolean nav, int active) {
         root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackground(grad());
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(false);
-        body = new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(24), dp(10), dp(24), dp(14));
+        body = new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); body.setPadding(dp(18), dp(8), dp(18), dp(12));
         scroll.addView(body); root.addView(scroll, new LinearLayout.LayoutParams(-1,0,1)); setContentView(root);
         header(title, back);
         if (nav) bottomNav(active);
@@ -102,24 +101,20 @@ public class PremiumActivity extends Activity {
 
     private void header(String title, boolean back) {
         LinearLayout h = new LinearLayout(this); h.setGravity(Gravity.CENTER_VERTICAL);
-        TextView left = text(back ? "‹" : "☰", 34, WHITE, false); left.setGravity(Gravity.CENTER); left.setOnClickListener(v -> onBackPressed());
-        h.addView(left, new LinearLayout.LayoutParams(dp(44), dp(48)));
-        TextView mid = text(title, 20, WHITE, false); mid.setGravity(Gravity.CENTER); h.addView(mid, new LinearLayout.LayoutParams(0, dp(48), 1));
-        TextView right = text(back ? "▱" : "E46", back ? 23 : 14, back ? WHITE : BLUE, true); right.setGravity(Gravity.CENTER);
-        h.addView(right, new LinearLayout.LayoutParams(dp(56), dp(48))); body.addView(h);
+        TextView left = text(back ? "‹" : "☰", 32, WHITE, false); left.setGravity(Gravity.CENTER); left.setOnClickListener(v -> onBackPressed());
+        h.addView(left, new LinearLayout.LayoutParams(dp(42), dp(46)));
+        TextView mid = text(title, 20, WHITE, false); mid.setGravity(Gravity.CENTER); h.addView(mid, new LinearLayout.LayoutParams(0, dp(46), 1));
+        TextView right = text(back ? "▱" : "E46", back ? 22 : 14, back ? WHITE : BLUE, true); right.setGravity(Gravity.CENTER);
+        h.addView(right, new LinearLayout.LayoutParams(dp(52), dp(46))); body.addView(h);
 
-        status = text(statusLine(), 11, statusColor(), true);
-        status.setGravity(Gravity.CENTER); status.setPadding(dp(14), dp(6), dp(14), dp(6));
-        status.setBackground(bg(Color.rgb(4,16,30), 20));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(36)); lp.setMargins(0,0,0,dp(8)); body.addView(status, lp);
+        status = text(statusLine(), 10, statusColor(), true);
+        status.setGravity(Gravity.CENTER); status.setPadding(dp(10), dp(5), dp(10), dp(5));
+        status.setBackground(bg(Color.rgb(3,13,24), 20));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(34)); lp.setMargins(0,0,0,dp(10)); body.addView(status, lp);
     }
 
     private int statusColor() { return busy ? YELLOW : (connected ? GREEN : RED); }
-
-    private String statusLine() {
-        String run = busy ? "EJECUTANDO" : "LISTO";
-        return run + "  |  " + (connected ? "CONECTADO" : "DESCONECTADO") + "  |  ELM " + (elmReady ? "OK" : "--") + "  |  BACKUP " + (backupDone ? "OK" : "--") + "  |  SAFE";
-    }
+    private String statusLine() { return (busy ? "EJECUTANDO" : "LISTO") + "  |  " + (connected ? "CONECTADO" : "DESCONECTADO") + "  |  ELM " + (elmReady ? "OK" : "--") + "  |  BACKUP " + (backupDone ? "OK" : "--") + "  |  SAFE"; }
 
     private void refreshStatus() {
         runOnUiThread(() -> {
@@ -130,91 +125,65 @@ public class PremiumActivity extends Activity {
         });
     }
 
-    private void runTask(Runnable r) {
-        if (busy) { addLog("ESPERA: operación ya en curso."); return; }
-        busy = true; refreshStatus();
-        try { r.run(); }
-        finally { busy = false; refreshStatus(); }
-    }
-
+    private void runTask(Runnable r) { if (busy) { addLog("ESPERA: operación ya en curso."); return; } busy=true; refreshStatus(); try{r.run();} finally{busy=false; refreshStatus();} }
     private void space(int h) { body.addView(new Space(this), new LinearLayout.LayoutParams(1, dp(h))); }
 
     private void showHome() {
         base("Coding Lab E46", false, true, 0);
         hero(); chips(); statusCards();
         section("MENU PRINCIPAL");
-        menu("⌕", "Coding Lab", "Funciones de confort y personalización", BLUE, () -> go("coding", true));
-        menu("▣", "Backup seguro", "Guardar estado OBD/ECU antes de pruebas", BLUE, () -> go("backup", true));
-        menu("⚡", "Pruebas", "Test guiado seguro por pasos", YELLOW, () -> go("tests", true));
-        menu("☼", "Luces", "Iluminación exterior e interior", YELLOW, () -> go("lights", true));
-        menu("▭", "Ventanillas", "Funciones de confort de ventanas", GREEN, () -> go("coding", true));
-        menu("▣", "Confort", "Cierre, apertura y funciones GM5", PURPLE, () -> go("comfort", true));
-        menu("◌", "LED / Check", "Gestión de LED y testigos", YELLOW, () -> go("lights", true));
-        menu("▰", "Diagnóstico", "Leer errores y estado de módulos", GREEN, () -> go("diag", true));
-        menu("ⓘ", "Información", "Detalles del vehículo y seguridad", BLUE, () -> go("info", true));
-        menu("▤", "Logs", "Registros y sesiones guardadas", PURPLE, () -> go("logs", true));
+        menu("", "Coding Lab", "Confort y personalización", BLUE, () -> go("coding", true));
+        menu("", "Backup seguro", "Estado OBD/ECU antes de pruebas", BLUE, () -> go("backup", true));
+        menu("", "Pruebas", "Test guiado seguro", YELLOW, () -> go("tests", true));
+        menu("", "Luces", "Iluminación exterior e interior", YELLOW, () -> go("lights", true));
+        menu("", "Ventanillas", "Funciones de confort", GREEN, () -> go("coding", true));
+        menu("", "Confort", "Cierre, apertura y GM5", PURPLE, () -> go("comfort", true));
+        menu("", "Diagnóstico", "Errores y módulos", GREEN, () -> go("diag", true));
+        menu("", "Logs", "Registros de sesión", PURPLE, () -> go("logs", true));
     }
 
     private void hero() {
         LinearLayout hero = new LinearLayout(this);
         hero.setOrientation(LinearLayout.VERTICAL);
-        hero.setPadding(dp(18), dp(16), dp(18), dp(14));
-        hero.setBackground(bg(Color.rgb(3,13,24), 18));
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, dp(218));
-        hp.setMargins(0, dp(4), 0, dp(12));
+        hero.setPadding(dp(16), dp(14), dp(16), dp(10));
+        hero.setBackground(bg(Color.rgb(3,12,22), 18));
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, dp(250));
+        hp.setMargins(0, 0, 0, dp(12));
         body.addView(hero, hp);
 
-        LinearLayout top = new LinearLayout(this);
-        top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView model = text("BMW E46", 30, WHITE, true);
-        top.addView(model, new LinearLayout.LayoutParams(0, dp(44), 1));
-        TextView badge = text("320d M47N", 13, BLUE, true);
-        badge.setGravity(Gravity.CENTER);
-        badge.setBackground(bg(Color.rgb(4,16,30), 18));
-        top.addView(badge, new LinearLayout.LayoutParams(dp(124), dp(34)));
+        LinearLayout top = new LinearLayout(this); top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView model = text("BMW E46", 28, WHITE, true); top.addView(model, new LinearLayout.LayoutParams(0, dp(40), 1));
+        TextView badge = text("320d M47N", 12, BLUE, true); badge.setGravity(Gravity.CENTER); badge.setBackground(bg(Color.rgb(4,15,28), 18)); top.addView(badge, new LinearLayout.LayoutParams(dp(118), dp(32)));
         hero.addView(top);
+        hero.addView(text("Coding Lab · Safe Mode", 13, MUTED, false));
 
-        hero.addView(text("Coding Lab · Diagnóstico · Backup · Confort", 13, MUTED, false));
-        hero.addView(new Space(this), new LinearLayout.LayoutParams(1, dp(10)));
+        ImageView car = new ImageView(this);
+        int res = getResources().getIdentifier("bmw_e46_user_hero", "drawable", getPackageName());
+        if (res != 0) car.setImageResource(res);
+        car.setScaleType(ImageView.ScaleType.FIT_CENTER); car.setAlpha(0.92f);
+        LinearLayout.LayoutParams carLp = new LinearLayout.LayoutParams(-1, 0, 1); carLp.setMargins(0, dp(2), 0, dp(2));
+        hero.addView(car, carLp);
 
-        LinearLayout mid = new LinearLayout(this);
-        mid.setGravity(Gravity.CENTER_VERTICAL);
-        hero.addView(mid, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        LinearLayout left = new LinearLayout(this);
-        left.setOrientation(LinearLayout.VERTICAL);
-        left.setGravity(Gravity.CENTER_VERTICAL);
-        left.addView(text(connected ? "● Bluetooth conectado" : "● Bluetooth desconectado", 13, connected ? GREEN : RED, true));
-        left.addView(text("SAFE MODE · READ ONLY", 13, BLUE, true));
-        left.addView(text("No escribe · no borra · no codifica sin backup", 12, MUTED, false));
-        left.addView(text("V4.3 · premium home", 11, MUTED, false));
-        mid.addView(left, new LinearLayout.LayoutParams(0, -1, 1));
-
-        LinearLayout modules = new LinearLayout(this);
-        modules.setOrientation(LinearLayout.VERTICAL);
-        modules.setGravity(Gravity.CENTER);
-        modules.setBackground(bg(Color.rgb(5,17,32), 16));
-        modules.addView(text("DDE", 13, GREEN, true));
-        modules.addView(text("LSZ", 13, YELLOW, true));
-        modules.addView(text("GM5", 13, PURPLE, true));
-        modules.addView(text("KOMBI", 12, BLUE, true));
-        mid.addView(modules, new LinearLayout.LayoutParams(dp(88), dp(96)));
-
-        View glow = new View(this);
-        glow.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.TRANSPARENT, Color.argb(115,0,122,255), Color.TRANSPARENT}));
-        hero.addView(glow, new LinearLayout.LayoutParams(-1, dp(4)));
+        LinearLayout foot = new LinearLayout(this); foot.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout left = new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
+        left.addView(text(connected ? "● Bluetooth conectado" : "● Bluetooth desconectado", 12, connected ? GREEN : RED, true));
+        left.addView(text("READ ONLY · NO WRITE", 12, BLUE, true));
+        foot.addView(left, new LinearLayout.LayoutParams(0, dp(42), 1));
+        TextView mods = text("DDE  LSZ  GM5", 11, BLUE, true); mods.setGravity(Gravity.CENTER); mods.setBackground(bg(Color.rgb(5,17,32), 16));
+        foot.addView(mods, new LinearLayout.LayoutParams(dp(120), dp(34)));
+        hero.addView(foot);
     }
 
     private void chips() {
-        HorizontalScrollView hsv = new HorizontalScrollView(this); hsv.setHorizontalScrollBarEnabled(false);
+        HorizontalScrollView hsv = new HorizontalScrollView(this); hsv.setHorizontalScrollBarEnabled(false); hsv.setClipToPadding(false);
         LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
         chip(row, "Backup", BLUE, () -> go("backup", true)); chip(row, "Pruebas", YELLOW, () -> go("tests", true)); chip(row, "Diagnóstico", GREEN, () -> go("diag", true)); chip(row, "Logs", PURPLE, () -> go("logs", true)); chip(row, "Confort", PURPLE, () -> go("comfort", true)); chip(row, "LED", YELLOW, () -> go("lights", true));
-        hsv.addView(row); body.addView(hsv, new LinearLayout.LayoutParams(-1, dp(52)));
+        hsv.addView(row); body.addView(hsv, new LinearLayout.LayoutParams(-1, dp(48)));
     }
 
     private void chip(LinearLayout row, String s, int color, Runnable r) {
-        TextView v = text(s, 13, color, true); v.setGravity(Gravity.CENTER); v.setPadding(dp(16),0,dp(16),0); v.setBackground(bg(Color.rgb(5,16,30), 24)); v.setOnClickListener(x -> r.run());
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(42)); lp.setMargins(0,0,dp(8),0); row.addView(v, lp);
+        TextView v = text(s, 12, color, true); v.setGravity(Gravity.CENTER); v.setPadding(dp(14),0,dp(14),0); v.setBackground(bg(Color.rgb(4,14,26), 22)); v.setOnClickListener(x -> r.run());
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(38)); lp.setMargins(0,0,dp(8),0); row.addView(v, lp);
     }
 
     private void statusCards() {
@@ -223,23 +192,23 @@ public class PremiumActivity extends Activity {
         smallStatus(row, "ELM", elmReady ? "OK" : "--", elmReady ? GREEN : MUTED);
         smallStatus(row, "BACKUP", backupDone ? "OK" : "--", backupDone ? GREEN : MUTED);
         smallStatus(row, "MODE", "SAFE", BLUE);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(62)); lp.setMargins(0,0,0,dp(6)); body.addView(row, lp);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(58)); lp.setMargins(0,0,0,dp(8)); body.addView(row, lp);
     }
 
     private void smallStatus(LinearLayout row, String title, String value, int color) {
-        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setGravity(Gravity.CENTER); box.setBackground(bg(Color.rgb(5,17,32), 14));
-        TextView a = text(title, 10, MUTED, true); a.setGravity(Gravity.CENTER); TextView b = text(value, 15, color, true); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b);
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setGravity(Gravity.CENTER); box.setBackground(bg(Color.rgb(4,14,26), 14));
+        TextView a = text(title, 9, MUTED, true); a.setGravity(Gravity.CENTER); TextView b = text(value, 14, color, true); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1); lp.setMargins(0,0,dp(6),0); row.addView(box, lp);
     }
 
-    private void section(String s) { TextView v=text(s,12,MUTED,true); v.setLetterSpacing(0.08f); v.setPadding(0,dp(14),0,dp(8)); body.addView(v); }
+    private void section(String s) { TextView v=text(s,11,MUTED,true); v.setLetterSpacing(0.08f); v.setPadding(0,dp(12),0,dp(7)); body.addView(v); }
 
     private void menu(String icon, String title, String sub, int color, Runnable click) {
-        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(12),0,dp(12),0); row.setBackground(bg(CARD2,14)); row.setOnClickListener(v -> click.run());
-        TextView ic = text(icon, 26, color, false); ic.setGravity(Gravity.CENTER); row.addView(ic, new LinearLayout.LayoutParams(dp(58), -1));
+        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); row.setPadding(dp(14),0,dp(12),0); row.setBackground(bg(CARD2,14)); row.setOnClickListener(v -> click.run());
+        View accent = new View(this); accent.setBackgroundColor(color); LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(dp(3), dp(34)); ap.setMargins(0,0,dp(14),0); row.addView(accent, ap);
         LinearLayout tx = new LinearLayout(this); tx.setOrientation(LinearLayout.VERTICAL); tx.setGravity(Gravity.CENTER_VERTICAL); tx.addView(text(title,16,WHITE,true)); tx.addView(text(sub,12,MUTED,false)); row.addView(tx, new LinearLayout.LayoutParams(0,-1,1));
-        TextView ar = text("›", 30, MUTED, false); ar.setGravity(Gravity.CENTER); row.addView(ar, new LinearLayout.LayoutParams(dp(24), -1));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(66)); lp.setMargins(0,0,0,dp(8)); body.addView(row, lp);
+        TextView ar = text("›", 28, MUTED, false); ar.setGravity(Gravity.CENTER); row.addView(ar, new LinearLayout.LayoutParams(dp(24), -1));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(62)); lp.setMargins(0,0,0,dp(8)); body.addView(row, lp);
     }
 
     private void showCoding(int activeTab) {
@@ -255,7 +224,7 @@ public class PremiumActivity extends Activity {
         HorizontalScrollView hsv = new HorizontalScrollView(this); hsv.setHorizontalScrollBarEnabled(false); LinearLayout row = new LinearLayout(this);
         String[] names={"LUCES","VENTANILLAS","CONFORT","OTROS","SEGURIDAD","BACKUP"};
         for(int i=0;i<names.length;i++){ final int idx=i; TextView tab=text(names[i],12,i==active?BLUE:MUTED,true); tab.setGravity(Gravity.CENTER); tab.setOnClickListener(v->showCoding(idx)); row.addView(tab,new LinearLayout.LayoutParams(dp(118),dp(42))); }
-        hsv.addView(row); body.addView(hsv); View line = new View(this); line.setBackgroundColor(BLUE); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(118),dp(2)); lp.leftMargin=dp(118*active); body.addView(line,lp); space(12);
+        hsv.addView(row); body.addView(hsv); View line=new View(this); line.setBackgroundColor(BLUE); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(118),dp(2)); lp.leftMargin=dp(118*active); body.addView(line,lp); space(12);
     }
 
     private void info(String s) { TextView v=text("ⓘ  "+s,13,Color.rgb(215,225,240),false); v.setPadding(dp(14),dp(12),dp(14),dp(12)); v.setBackground(bg(Color.rgb(5,17,32),12)); body.addView(v,new LinearLayout.LayoutParams(-1,-2)); }
