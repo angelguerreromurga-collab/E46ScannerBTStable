@@ -1,42 +1,40 @@
-# Safe final test build for car connection
+# Build trigger with body module read only base
 
-This commit intentionally triggers GitHub Actions for the first real car connection test.
+This commit intentionally triggers GitHub Actions after adding the first Java base classes for body modules.
 
-Mode for this APK:
+New classes added:
 
-- READ ONLY.
-- SAFE MODE.
+- ModuleState.java
+- BodyModuleProfile.java
+- BodyModuleReadOnlyManager.java
+
+Purpose:
+
+- Prepare LSZ lights module phase.
+- Prepare GM5 comfort module phase.
+- Keep everything READ ONLY.
 - No real coding.
-- No module writing.
-- No erase DTC command.
-- No LSZ/GM5/DDE/KOMBI write action.
+- No writing.
+- No erase.
+- No reset.
 
-Allowed during first car test:
+Current verified car capability:
 
-1. Open app.
-2. Connect Bluetooth ELM327.
-3. Initialize ELM327.
-4. Read protocol.
-5. Read motor/basic PIDs.
-6. Read DTC.
-7. Run Backup OBD/ECU READ ONLY.
-8. Share/export full session log.
+- ELM Bluetooth OK.
+- ISO 9141-2 detected.
+- Engine PIDs readable.
+- DTC readable.
+- Backup READ ONLY OK.
+- P0401 decoded from OBD generic.
 
-Do not use as real coding tool yet.
+Next app development:
+
+1. Wire Modules screen to BodyModuleReadOnlyManager.
+2. Add LSZ card.
+3. Add GM5 card.
+4. Add module RAW export area.
+5. Add popups for blocked write/coding attempts.
 
 Expected artifact name:
 
 E46ScannerBT-V4.2-premium-decoded-diagnostics-debug-apk
-
-Critical validation:
-
-1. APK compiles.
-2. App opens without crash.
-3. Home loads.
-4. Backup screen opens.
-5. Tests screen opens.
-6. Diagnostics screen opens.
-7. Logs screen opens.
-8. Android Back returns to previous screen.
-9. Export/share works.
-10. No write action is possible.
