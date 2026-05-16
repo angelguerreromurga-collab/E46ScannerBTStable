@@ -27,6 +27,7 @@ public class PremiumActivity extends Activity {
     private ElmClient elmClient;
     private final ArrayList<String> history = new ArrayList<>();
     private final StringBuilder log = new StringBuilder();
+    private final SimpleDateFormat logTime = new SimpleDateFormat("HH:mm:ss", Locale.US);
 
     private boolean connected=false, elmReady=false, protocolReady=false, motorRead=false, dtcRead=false, backupDone=false, busy=false;
 
@@ -260,12 +261,13 @@ public class PremiumActivity extends Activity {
 
     private void showDiagnostics() { base("Diagnóstico", true, true, 2); section("INFORME MECANICO"); diagnosticBox=card(elmClient.diagnosticText(),14); body.addView(diagnosticBox); section("ACCIONES"); body.addView(action("Conectar ELM327",this::realConnect)); body.addView(action("Inicializar ELM",this::realElm)); body.addView(action("Leer motor básico",this::realMotor)); body.addView(action("Leer DTC",this::realDtc)); body.addView(action("Backup seguro READ ONLY",this::realBackup)); body.addView(action("Compartir sesión completa",this::share)); logSection(); }
     private void showInfo(){base("Información",true,true,3);section("VEHICULO");body.addView(card("BMW E46 320d/320Cd M47N\nMotor: M47N / diesel\nApp: Coding Lab E46 V4.2\nModo: SAFE / READ ONLY",14));section("ESTADO DEL SISTEMA");body.addView(card(checklist(),13));section("SEGURIDAD ACTIVA");body.addView(card("SafeCommandBatch activo antes de transmitir.\nBloqueados: 04, 14, 2E, 3B, 30, 31, 34, 36, 37.\nLSZ/GM5: solo simulación.\nNo borra errores. No escribe módulos.",13));section("OBJETIVOS");body.addView(card("LSZ LED cold/warm check.\nGM5 comfort close.\nBlink unlock.\nVentanillas coupe.\nTodo queda pendiente de backup verificable.",13));}
-    private void showLogs(){base("Logs",true,true,2);section("EXPORTAR");body.addView(action("Compartir sesión completa",this::share));logSection();}
+    private void showLogs(){base("Logs",true,true,2);section("EXPORTAR");body.addView(action("Compartir sesión completa",this::share));body.addView(action("Limpiar registro visual",this::clearLog));logSection();}
 
     private TextView card(String s,int sp){TextView v=text(s,sp,WHITE,false);v.setLineSpacing(dp(2),1.0f);v.setPadding(dp(14),dp(12),dp(14),dp(12));v.setBackground(bg(CARD2,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(8));v.setLayoutParams(lp);return v;}
     private TextView action(String s,Runnable r){TextView v=card(s + "    ›",14);v.setGravity(Gravity.CENTER_VERTICAL);v.setHeight(dp(54));v.setOnClickListener(x->{ if(busy){addLog("ESPERA: operación ya en curso.");return;} new Thread(()->runTask(r)).start();});return v;}
     private void logSection(){section("REGISTRO");logBox=card(log.toString(),12);body.addView(logBox,new LinearLayout.LayoutParams(-1,dp(245)));}
-    private void addLog(String s){log.append(s).append("\n\n");refreshStatus();}
+    private void addLog(String s){log.append("[").append(logTime.format(new Date())).append("] ").append(s).append("\n\n");refreshStatus();}
+    private void clearLog(){log.setLength(0);log.append("BMW E46 SCANNER SESSION\n").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date())).append("\nSAFE MODE - READ ONLY\n\n");addLog("Registro visual reiniciado.");}
 
     private void bottomNav(int active){LinearLayout nav=new LinearLayout(this);nav.setPadding(dp(6),dp(4),dp(6),dp(4));nav.setBackgroundColor(Color.rgb(1,8,16));String[] labels={"⌂\nInicio","◇\nMódulos","▤\nLogs","⚙\nAjustes"};Runnable[] actions={()->go("home",false),()->go("coding",true),()->go("logs",true),()->go("info",true)};for(int i=0;i<4;i++){final int idx=i;TextView v=text(labels[i],12,i==active?BLUE:MUTED,i==active);v.setGravity(Gravity.CENTER);if(i==active)v.setBackground(bg(Color.rgb(4,16,30),16));v.setOnClickListener(x->actions[idx].run());LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(58),1);lp.setMargins(dp(3),0,dp(3),0);nav.addView(v,lp);}root.addView(nav,new LinearLayout.LayoutParams(-1,dp(66)));}
     private void share(){Intent i=new Intent(Intent.ACTION_SEND);i.setType("text/plain");i.putExtra(Intent.EXTRA_SUBJECT,"BMW E46 Scanner Session");i.putExtra(Intent.EXTRA_TEXT,log.toString());startActivity(Intent.createChooser(i,"Enviar sesión"));}
