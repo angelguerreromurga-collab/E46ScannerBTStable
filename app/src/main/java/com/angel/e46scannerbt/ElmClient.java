@@ -19,6 +19,7 @@ public class ElmClient {
     private static final UUID SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private final Activity activity;
     private final LogSink sink;
+    private final ObdSnapshot snapshot = new ObdSnapshot();
     private BluetoothSocket socket;
     private InputStream in;
     private OutputStream out;
@@ -31,6 +32,18 @@ public class ElmClient {
 
     public boolean isConnected() {
         return socket != null && socket.isConnected() && in != null && out != null;
+    }
+
+    public ObdSnapshot snapshot() {
+        return snapshot;
+    }
+
+    public String liveText() {
+        return snapshot.liveText();
+    }
+
+    public String diagnosticText() {
+        return DiagnosticFormatter.format(snapshot);
     }
 
     public String connect() {
@@ -101,6 +114,7 @@ public class ElmClient {
         out.flush();
         Thread.sleep(cmd.equals("ATZ") ? 1600 : 850);
         String response = read();
+        ObdParser.parseInto(snapshot, cmd + "\n" + response);
         return "> " + cmd + "\n" + response + "\n\n";
     }
 
