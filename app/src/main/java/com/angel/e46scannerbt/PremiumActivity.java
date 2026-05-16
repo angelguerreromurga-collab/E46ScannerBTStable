@@ -8,7 +8,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
-import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -157,20 +156,53 @@ public class PremiumActivity extends Activity {
     }
 
     private void hero() {
-        FrameLayout hero = new FrameLayout(this); hero.setBackground(bg(Color.rgb(3,13,24), 18));
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, dp(236)); hp.setMargins(0, dp(4), 0, dp(12)); body.addView(hero, hp);
-        TextView glow = text("",1,WHITE,false); glow.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.TRANSPARENT, Color.argb(105,0,122,255), Color.TRANSPARENT}));
-        FrameLayout.LayoutParams gp = new FrameLayout.LayoutParams(-1, dp(92), Gravity.BOTTOM); gp.bottomMargin = dp(22); hero.addView(glow, gp);
-        TextView car = text("BMW E46", 16, BLUE, true); car.setGravity(Gravity.CENTER);
-        int res = getResources().getIdentifier("bmw_e46_black_coupe_hero", "drawable", getPackageName()); if (res != 0) car.setBackgroundResource(res);
-        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(dp(405), dp(178), Gravity.RIGHT | Gravity.TOP); cp.topMargin=dp(8); cp.rightMargin=dp(-18); hero.addView(car, cp);
-        LinearLayout info = new LinearLayout(this); info.setOrientation(LinearLayout.VERTICAL); info.setGravity(Gravity.CENTER_VERTICAL); info.setPadding(dp(16),0,0,0);
-        info.addView(text(connected ? "Bluetooth conectado" : "Bluetooth desconectado", 13, connected ? GREEN : RED, true));
-        info.addView(text("BMW E46 320d M47N", 18, WHITE, true));
-        info.addView(text("SAFE MODE · READ ONLY", 12, BLUE, true));
-        info.addView(text("No escribe sin backup", 12, MUTED, false));
-        info.addView(text("V4.2 · decoded diagnostics", 11, MUTED, false));
-        hero.addView(info, new FrameLayout.LayoutParams(dp(238), -1, Gravity.LEFT));
+        LinearLayout hero = new LinearLayout(this);
+        hero.setOrientation(LinearLayout.VERTICAL);
+        hero.setPadding(dp(18), dp(16), dp(18), dp(14));
+        hero.setBackground(bg(Color.rgb(3,13,24), 18));
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, dp(218));
+        hp.setMargins(0, dp(4), 0, dp(12));
+        body.addView(hero, hp);
+
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView model = text("BMW E46", 30, WHITE, true);
+        top.addView(model, new LinearLayout.LayoutParams(0, dp(44), 1));
+        TextView badge = text("320d M47N", 13, BLUE, true);
+        badge.setGravity(Gravity.CENTER);
+        badge.setBackground(bg(Color.rgb(4,16,30), 18));
+        top.addView(badge, new LinearLayout.LayoutParams(dp(124), dp(34)));
+        hero.addView(top);
+
+        hero.addView(text("Coding Lab · Diagnóstico · Backup · Confort", 13, MUTED, false));
+        hero.addView(new Space(this), new LinearLayout.LayoutParams(1, dp(10)));
+
+        LinearLayout mid = new LinearLayout(this);
+        mid.setGravity(Gravity.CENTER_VERTICAL);
+        hero.addView(mid, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        LinearLayout left = new LinearLayout(this);
+        left.setOrientation(LinearLayout.VERTICAL);
+        left.setGravity(Gravity.CENTER_VERTICAL);
+        left.addView(text(connected ? "● Bluetooth conectado" : "● Bluetooth desconectado", 13, connected ? GREEN : RED, true));
+        left.addView(text("SAFE MODE · READ ONLY", 13, BLUE, true));
+        left.addView(text("No escribe · no borra · no codifica sin backup", 12, MUTED, false));
+        left.addView(text("V4.3 · premium home", 11, MUTED, false));
+        mid.addView(left, new LinearLayout.LayoutParams(0, -1, 1));
+
+        LinearLayout modules = new LinearLayout(this);
+        modules.setOrientation(LinearLayout.VERTICAL);
+        modules.setGravity(Gravity.CENTER);
+        modules.setBackground(bg(Color.rgb(5,17,32), 16));
+        modules.addView(text("DDE", 13, GREEN, true));
+        modules.addView(text("LSZ", 13, YELLOW, true));
+        modules.addView(text("GM5", 13, PURPLE, true));
+        modules.addView(text("KOMBI", 12, BLUE, true));
+        mid.addView(modules, new LinearLayout.LayoutParams(dp(88), dp(96)));
+
+        View glow = new View(this);
+        glow.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{Color.TRANSPARENT, Color.argb(115,0,122,255), Color.TRANSPARENT}));
+        hero.addView(glow, new LinearLayout.LayoutParams(-1, dp(4)));
     }
 
     private void chips() {
@@ -223,7 +255,7 @@ public class PremiumActivity extends Activity {
         HorizontalScrollView hsv = new HorizontalScrollView(this); hsv.setHorizontalScrollBarEnabled(false); LinearLayout row = new LinearLayout(this);
         String[] names={"LUCES","VENTANILLAS","CONFORT","OTROS","SEGURIDAD","BACKUP"};
         for(int i=0;i<names.length;i++){ final int idx=i; TextView tab=text(names[i],12,i==active?BLUE:MUTED,true); tab.setGravity(Gravity.CENTER); tab.setOnClickListener(v->showCoding(idx)); row.addView(tab,new LinearLayout.LayoutParams(dp(118),dp(42))); }
-        hsv.addView(row); body.addView(hsv); View line=new View(this); line.setBackgroundColor(BLUE); LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(118),dp(2)); lp.leftMargin=dp(118*active); body.addView(line,lp); space(12);
+        hsv.addView(row); body.addView(hsv); View line = new View(this); line.setBackgroundColor(BLUE); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(118),dp(2)); lp.leftMargin=dp(118*active); body.addView(line,lp); space(12);
     }
 
     private void info(String s) { TextView v=text("ⓘ  "+s,13,Color.rgb(215,225,240),false); v.setPadding(dp(14),dp(12),dp(14),dp(12)); v.setBackground(bg(Color.rgb(5,17,32),12)); body.addView(v,new LinearLayout.LayoutParams(-1,-2)); }
@@ -260,7 +292,7 @@ public class PremiumActivity extends Activity {
     private void guarded(String name){if(!backupDone)addLog("BLOQUEADO: "+name+" requiere Backup seguro. No se modifica nada.");else addLog(name+" listo en SIMULACION. Escritura real deshabilitada.");refreshStatus();}
 
     private void showDiagnostics() { base("Diagnóstico", true, true, 2); section("INFORME MECANICO"); diagnosticBox=card(elmClient.diagnosticText(),14); body.addView(diagnosticBox); section("ACCIONES"); body.addView(action("Conectar ELM327",this::realConnect)); body.addView(action("Inicializar ELM",this::realElm)); body.addView(action("Leer motor básico",this::realMotor)); body.addView(action("Leer DTC",this::realDtc)); body.addView(action("Backup seguro READ ONLY",this::realBackup)); body.addView(action("Compartir sesión completa",this::share)); logSection(); }
-    private void showInfo(){base("Información",true,true,3);section("VEHICULO");body.addView(card("BMW E46 320d/320Cd M47N\nMotor: M47N / diesel\nApp: Coding Lab E46 V4.2\nModo: SAFE / READ ONLY",14));section("ESTADO DEL SISTEMA");body.addView(card(checklist(),13));section("SEGURIDAD ACTIVA");body.addView(card("SafeCommandBatch activo antes de transmitir.\nBloqueados: 04, 14, 2E, 3B, 30, 31, 34, 36, 37.\nLSZ/GM5: solo simulación.\nNo borra errores. No escribe módulos.",13));section("OBJETIVOS");body.addView(card("LSZ LED cold/warm check.\nGM5 comfort close.\nBlink unlock.\nVentanillas coupe.\nTodo queda pendiente de backup verificable.",13));}
+    private void showInfo(){base("Información",true,true,3);section("VEHICULO");body.addView(card("BMW E46 320d/320Cd M47N\nMotor: M47N / diesel\nApp: Coding Lab E46 V4.3\nModo: SAFE / READ ONLY",14));section("ESTADO DEL SISTEMA");body.addView(card(checklist(),13));section("SEGURIDAD ACTIVA");body.addView(card("SafeCommandBatch activo antes de transmitir.\nBloqueados: 04, 14, 2E, 3B, 30, 31, 34, 36, 37.\nLSZ/GM5: solo simulación.\nNo borra errores. No escribe módulos.",13));section("OBJETIVOS");body.addView(card("LSZ LED cold/warm check.\nGM5 comfort close.\nBlink unlock.\nVentanillas coupe.\nTodo queda pendiente de backup verificable.",13));}
     private void showLogs(){base("Logs",true,true,2);section("EXPORTAR");body.addView(action("Compartir sesión completa",this::share));body.addView(action("Limpiar registro visual",this::clearLog));logSection();}
 
     private TextView card(String s,int sp){TextView v=text(s,sp,WHITE,false);v.setLineSpacing(dp(2),1.0f);v.setPadding(dp(14),dp(12),dp(14),dp(12));v.setBackground(bg(CARD2,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(8));v.setLayoutParams(lp);return v;}
