@@ -264,8 +264,8 @@ public class PremiumActivity extends Activity {
     private void realProtocol(){String r=elmClient.readProtocol();protocolReady=elmClient.isConnected()&&!r.contains("ERROR");addLog(r);refreshStatus();}
     private void realMotor(){String r=elmClient.readMotor();motorRead=elmClient.isConnected()&&!r.contains("ERROR");addLog(r);refreshStatus();}
     private void realDtc(){String r=elmClient.readDtc();dtcRead=elmClient.isConnected()&&!r.contains("ERROR");addLog(r);refreshStatus();}
-    private void realModule(String moduleKey){String r=elmClient.readModule(moduleKey);connected=elmClient.isConnected();protocolReady=connected&&!r.contains("ERROR")&&!r.contains("BLOQUEADO");addLog(r);refreshStatus();}
-    private void scanModule(String moduleKey){String r=elmClient.scanModuleHeaders(moduleKey);connected=elmClient.isConnected();protocolReady=connected&&!r.contains("ERROR")&&!r.contains("BLOQUEADO");addLog(r);refreshStatus();}
+    private void realModule(String moduleKey){addLog("INICIANDO lectura " + moduleKey + " READ ONLY...");String r=elmClient.readModule(moduleKey);connected=elmClient.isConnected();protocolReady=connected&&!r.contains("ERROR")&&!r.contains("BLOQUEADO");addLog(r);refreshStatus();}
+    private void scanModule(String moduleKey){addLog("INICIANDO scan " + moduleKey + " cabeceras READ ONLY. Puede tardar 30-60 s...");String r=elmClient.scanModuleHeaders(moduleKey);connected=elmClient.isConnected();protocolReady=connected&&!r.contains("ERROR")&&!r.contains("BLOQUEADO");addLog(r);refreshStatus();}
     private void realBackup(){String r=elmClient.backupSafe();connected=elmClient.isConnected();backupDone=connected&&!r.contains("ERROR")&&!r.contains("BLOQUEADO");if(backupDone){elmReady=true;protocolReady=true;motorRead=true;dtcRead=true;}addLog(r+(backupDone?"\nBACKUP OK: RAW exportable. No se ha escrito nada.":""));refreshStatus();}
     private String realWritePlan(String title){String module=title.toLowerCase().contains("led") ? "LSZ" : "GM5"; return elmClient.buildWritePlan(module,title);}
 
