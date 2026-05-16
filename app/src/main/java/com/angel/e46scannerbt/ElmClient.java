@@ -88,9 +88,33 @@ public class ElmClient {
         out.append("===== MODULO BMW READ ONLY =====\n");
         out.append(profile.describe()).append("\n\n");
         out.append(initBmwKwp()).append("\n");
-        out.append(run(profile.name + " READ ONLY", profile.safeReadCommands));
+        out.append(run(profile.name + " READ ONLY", withHeader(profile.header, profile.safeReadCommands)));
         out.append("\nFIN READ ONLY: no se ha escrito ni borrado nada.\n");
         return out.toString();
+    }
+
+    public String scanModuleHeaders(String moduleKey) {
+        E46ModuleProfile profile = E46ModuleRegistry.get(moduleKey);
+        if (profile == null) return "ERROR: modulo no definido: " + moduleKey;
+        StringBuilder out = new StringBuilder();
+        out.append("===== SCAN CABECERAS BMW READ ONLY =====\n");
+        out.append(profile.name).append("\n");
+        out.append("Objetivo: encontrar cabecera que responda sin escribir.\n\n");
+        out.append(initBmwKwp()).append("\n");
+        for (String header : profile.headerVariants) {
+            out.append("--- CANDIDATO ").append(header).append(" ---\n");
+            out.append(run(profile.name + " HEADER SCAN", withHeader(header, profile.safeReadCommands)));
+            out.append("\n");
+        }
+        out.append("FIN SCAN: no se ha escrito ni borrado nada.\n");
+        return out.toString();
+    }
+
+    private String[] withHeader(String header, String[] commands) {
+        String[] out = new String[commands.length + 1];
+        out[0] = header;
+        System.arraycopy(commands, 0, out, 1, commands.length);
+        return out;
     }
 
     public String buildWritePlan(String moduleKey, String featureName) {
