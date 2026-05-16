@@ -5,12 +5,13 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
-    <application android:allowBackup="true" android:label="Coding Lab E46 V2" android:supportsRtl="true" android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="true">
+    <application android:allowBackup="true" android:label="Coding Lab E46 V3 Premium" android:supportsRtl="true" android:theme="@style/AppTheme">
+        <activity android:name=".PremiumActivity" android:screenOrientation="portrait" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MainActivity" android:screenOrientation="portrait" android:exported="false" />
     </application>
 </manifest>
