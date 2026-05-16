@@ -27,6 +27,7 @@ public class PremiumActivity extends Activity {
     private TextView status;
     private TextView logBox;
     private TextView checklistBox;
+    private TextView diagnosticBox;
     private ElmClient elmClient;
     private final ArrayList<String> history = new ArrayList<>();
     private final StringBuilder log = new StringBuilder();
@@ -156,6 +157,7 @@ public class PremiumActivity extends Activity {
             }
             if (checklistBox != null) checklistBox.setText(checklist());
             if (logBox != null) logBox.setText(log.toString());
+            if (diagnosticBox != null) diagnosticBox.setText(elmClient.diagnosticText());
         });
     }
 
@@ -367,7 +369,8 @@ public class PremiumActivity extends Activity {
 
     private void showDiagnostics() {
         base("Diagnóstico", true, true, 2);
-        body.addView(card("RPM --     TEMP --\nMAP --     MAF --\nVEL --     IAT --\nDTC --", 14));
+        diagnosticBox = card(elmClient.diagnosticText(), 14);
+        body.addView(diagnosticBox);
         body.addView(action("Conectar ELM327", () -> realConnect()));
         body.addView(action("Inicializar ELM", () -> realElm()));
         body.addView(action("Leer motor básico", () -> realMotor()));
