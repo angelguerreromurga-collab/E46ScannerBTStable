@@ -34,17 +34,9 @@ public class ElmClient {
         return socket != null && socket.isConnected() && in != null && out != null;
     }
 
-    public ObdSnapshot snapshot() {
-        return snapshot;
-    }
-
-    public String liveText() {
-        return snapshot.liveText();
-    }
-
-    public String diagnosticText() {
-        return DiagnosticFormatter.format(snapshot);
-    }
+    public ObdSnapshot snapshot() { return snapshot; }
+    public String liveText() { return snapshot.liveText(); }
+    public String diagnosticText() { return DiagnosticFormatter.format(snapshot); }
 
     public String connect() {
         try {
@@ -74,20 +66,45 @@ public class ElmClient {
         return run("INIT ELM", new String[]{"ATZ", "ATE0", "ATL0", "ATS0", "ATH1", "ATI", "ATRV", "ATSP0", "ATDP", "ATDPN"});
     }
 
+    public String initBmwKwp() {
+        return run("INIT BMW KWP", new String[]{"ATSP3", "ATIB10", "ATSH 68 6A F1", "ATSW00", "ATST32", "ATAT1", "ATDP", "ATDPN"});
+    }
+
     public String readMotor() {
         return run("MOTOR", new String[]{"0120", "010C", "0105", "010D", "010B", "010F", "0110"});
     }
 
-    public String readDtc() {
-        return run("DTC", new String[]{"03", "07"});
-    }
-
-    public String readProtocol() {
-        return run("PROTOCOLO", new String[]{"ATDP", "ATDPN", "0100"});
-    }
+    public String readDtc() { return run("DTC", new String[]{"03", "07"}); }
+    public String readProtocol() { return run("PROTOCOLO", new String[]{"ATDP", "ATDPN", "0100"}); }
 
     public String backupSafe() {
         return run("BACKUP SEGURO READ ONLY", new String[]{"ATI", "ATRV", "ATDP", "ATDPN", "0100", "0120", "0140", "03", "07", "0A"});
+    }
+
+    public String readModule(String moduleKey) {
+        E46ModuleProfile profile = E46ModuleRegistry.get(moduleKey);
+        if (profile == null) return "ERROR: modulo no definido: " + moduleKey;
+        StringBuilder out = new StringBuilder();
+        out.append("===== MODULO BMW READ ONLY =====\n");
+        out.append(profile.describe()).append("\n\n");
+        out.append(initBmwKwp()).append("\n");
+        out.append(run(profile.name + " READ ONLY", profile.safeReadCommands));
+        out.append("\nFIN READ ONLY: no se ha escrito ni borrado nada.\n");
+        return out.toString();
+    }
+
+    public String buildWritePlan(String moduleKey, String featureName) {
+        E46ModuleProfile profile = E46ModuleRegistry.get(moduleKey);
+        if (profile == null) return "WRITE PLAN ERROR: modulo no definido: " + moduleKey;
+        StringBuilder out = new StringBuilder();
+        out.append("===== WRITE PLAN BLOQUEADO =====\n");
+        out.append("Modulo: ").append(profile.name).append("\n");
+        out.append("Funcion: ").append(featureName).append("\n");
+        out.append("Header previsto: ").append(profile.header).append("\n");
+        out.append("Estado: SIMULACION / NO TRANSMITIDO\n");
+        out.append("Motivo: escritura real bloqueada hasta backup verificable, tension estable y lectura de modulo correcta.\n");
+        out.append("Servicios prohibidos por politica: 2E, 3B, 14, 30, 31, 34, 36, 37.\n");
+        return out.toString();
     }
 
     public String run(String title, String[] commands) {
