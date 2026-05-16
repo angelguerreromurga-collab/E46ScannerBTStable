@@ -28,7 +28,7 @@ public class PremiumActivity extends Activity {
     private final ArrayList<String> history = new ArrayList<>();
     private final StringBuilder log = new StringBuilder();
 
-    private boolean connected=false, elmReady=false, protocolReady=false, motorRead=false, dtcRead=false, backupDone=false;
+    private boolean connected=false, elmReady=false, protocolReady=false, motorRead=false, dtcRead=false, backupDone=false, busy=false;
 
     private final int BG=Color.rgb(0,6,14), BG2=Color.rgb(2,13,25), CARD=Color.rgb(7,18,32), CARD2=Color.rgb(9,23,42), LINE=Color.rgb(25,55,90);
     private final int WHITE=Color.WHITE, MUTED=Color.rgb(168,181,201), BLUE=Color.rgb(0,122,255), GREEN=Color.rgb(42,225,112), RED=Color.rgb(255,70,90), YELLOW=Color.rgb(245,205,50), PURPLE=Color.rgb(160,90,255);
@@ -106,30 +106,39 @@ public class PremiumActivity extends Activity {
         TextView right = text(back ? "▱" : "E46", back ? 23 : 14, back ? WHITE : BLUE, true); right.setGravity(Gravity.CENTER);
         h.addView(right, new LinearLayout.LayoutParams(dp(56), dp(48))); body.addView(h);
 
-        status = text(statusLine(), 11, connected ? GREEN : RED, true);
+        status = text(statusLine(), 11, statusColor(), true);
         status.setGravity(Gravity.CENTER); status.setPadding(dp(14), dp(6), dp(14), dp(6));
         status.setBackground(bg(Color.rgb(4,16,30), 20));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(36)); lp.setMargins(0,0,0,dp(8)); body.addView(status, lp);
     }
 
+    private int statusColor() { return busy ? YELLOW : (connected ? GREEN : RED); }
+
     private String statusLine() {
-        return (connected ? "CONECTADO" : "DESCONECTADO") + "  |  ELM " + (elmReady ? "OK" : "--") + "  |  BACKUP " + (backupDone ? "OK" : "--") + "  |  SAFE";
+        String run = busy ? "EJECUTANDO" : "LISTO";
+        return run + "  |  " + (connected ? "CONECTADO" : "DESCONECTADO") + "  |  ELM " + (elmReady ? "OK" : "--") + "  |  BACKUP " + (backupDone ? "OK" : "--") + "  |  SAFE";
     }
 
     private void refreshStatus() {
         runOnUiThread(() -> {
-            if (status != null) { status.setText(statusLine()); status.setTextColor(connected ? GREEN : RED); }
+            if (status != null) { status.setText(statusLine()); status.setTextColor(statusColor()); }
             if (checklistBox != null) checklistBox.setText(checklist());
             if (logBox != null) logBox.setText(log.toString());
             if (diagnosticBox != null) diagnosticBox.setText(elmClient.diagnosticText());
         });
     }
 
+    private void runTask(Runnable r) {
+        busy = true; refreshStatus();
+        try { r.run(); }
+        finally { busy = false; refreshStatus(); }
+    }
+
     private void space(int h) { body.addView(new Space(this), new LinearLayout.LayoutParams(1, dp(h))); }
 
     private void showHome() {
         base("Coding Lab E46", false, true, 0);
-        hero(); chips();
+        hero(); chips(); statusCards();
         section("MENU PRINCIPAL");
         menu("⌕", "Coding Lab", "Funciones de confort y personalización", BLUE, () -> go("coding", true));
         menu("▣", "Backup seguro", "Guardar estado OBD/ECU antes de pruebas", BLUE, () -> go("backup", true));
@@ -162,13 +171,27 @@ public class PremiumActivity extends Activity {
     private void chips() {
         HorizontalScrollView hsv = new HorizontalScrollView(this); hsv.setHorizontalScrollBarEnabled(false);
         LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
-        chip(row, "Backup", BLUE, () -> go("backup", true)); chip(row, "Pruebas", YELLOW, () -> go("tests", true)); chip(row, "Diagnóstico", GREEN, () -> go("diag", true)); chip(row, "Logs", PURPLE, () -> go("logs", true)); chip(row, "Confort", PURPLE, () -> go("comfort", true));
+        chip(row, "Backup", BLUE, () -> go("backup", true)); chip(row, "Pruebas", YELLOW, () -> go("tests", true)); chip(row, "Diagnóstico", GREEN, () -> go("diag", true)); chip(row, "Logs", PURPLE, () -> go("logs", true)); chip(row, "Confort", PURPLE, () -> go("comfort", true)); chip(row, "LED", YELLOW, () -> go("lights", true));
         hsv.addView(row); body.addView(hsv, new LinearLayout.LayoutParams(-1, dp(52)));
     }
 
     private void chip(LinearLayout row, String s, int color, Runnable r) {
         TextView v = text(s, 13, color, true); v.setGravity(Gravity.CENTER); v.setPadding(dp(16),0,dp(16),0); v.setBackground(bg(Color.rgb(5,16,30), 24)); v.setOnClickListener(x -> r.run());
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, dp(42)); lp.setMargins(0,0,dp(8),0); row.addView(v, lp);
+    }
+
+    private void statusCards() {
+        LinearLayout row = new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
+        smallStatus(row, "BT", connected ? "OK" : "--", connected ? GREEN : RED);
+        smallStatus(row, "ELM", elmReady ? "OK" : "--", elmReady ? GREEN : MUTED);
+        smallStatus(row, "BACKUP", backupDone ? "OK" : "--", backupDone ? GREEN : MUTED);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(62)); lp.setMargins(0,0,0,dp(6)); body.addView(row, lp);
+    }
+
+    private void smallStatus(LinearLayout row, String title, String value, int color) {
+        LinearLayout box = new LinearLayout(this); box.setOrientation(LinearLayout.VERTICAL); box.setGravity(Gravity.CENTER); box.setBackground(bg(Color.rgb(5,17,32), 14));
+        TextView a = text(title, 10, MUTED, true); a.setGravity(Gravity.CENTER); TextView b = text(value, 16, color, true); b.setGravity(Gravity.CENTER); box.addView(a); box.addView(b);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1); lp.setMargins(0,0,dp(8),0); row.addView(box, lp);
     }
 
     private void section(String s) { TextView v=text(s,12,MUTED,true); v.setLetterSpacing(0.08f); v.setPadding(0,dp(14),0,dp(8)); body.addView(v); }
@@ -235,7 +258,7 @@ public class PremiumActivity extends Activity {
     private void showLogs(){base("Logs",true,true,2);body.addView(action("Compartir sesión completa",this::share));logSection();}
 
     private TextView card(String s,int sp){TextView v=text(s,sp,WHITE,false);v.setPadding(dp(14),dp(12),dp(14),dp(12));v.setBackground(bg(CARD2,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(0,0,0,dp(8));v.setLayoutParams(lp);return v;}
-    private TextView action(String s,Runnable r){TextView v=card(s,14);v.setGravity(Gravity.CENTER_VERTICAL);v.setHeight(dp(54));v.setOnClickListener(x->new Thread(r).start());return v;}
+    private TextView action(String s,Runnable r){TextView v=card(s,14);v.setGravity(Gravity.CENTER_VERTICAL);v.setHeight(dp(54));v.setOnClickListener(x->new Thread(()->runTask(r)).start());return v;}
     private void logSection(){logBox=card(log.toString(),12);body.addView(logBox,new LinearLayout.LayoutParams(-1,dp(245)));}
     private void addLog(String s){log.append(s).append("\n\n");refreshStatus();}
 
