@@ -1,42 +1,42 @@
-# Build trigger for Sticklight V4.3 visual integration
+# Safe final test build for car connection
 
-This commit intentionally triggers GitHub Actions after integrating the Sticklight-inspired premium visual direction into the Android app.
+This commit intentionally triggers GitHub Actions for the first real car connection test.
 
-Sticklight reference provided by user:
+Mode for this APK:
 
-https://3c306fec-f6ce-488f-a152-f389a54d35c8.preview.sticklight.com/
+- READ ONLY.
+- SAFE MODE.
+- No real coding.
+- No module writing.
+- No erase DTC command.
+- No LSZ/GM5/DDE/KOMBI write action.
 
-Published Sticklight reference:
+Allowed during first car test:
 
-https://codinglab-bmw-e46-premium.sticklight.app
+1. Open app.
+2. Connect Bluetooth ELM327.
+3. Initialize ELM327.
+4. Read protocol.
+5. Read motor/basic PIDs.
+6. Read DTC.
+7. Run Backup OBD/ECU READ ONLY.
+8. Share/export full session log.
 
-Integrated visual direction:
-
-- Native mobile-style vertical layout.
-- Dark BMW-like palette.
-- Compact top header.
-- Compact status pill.
-- Large hero with dedicated car image area.
-- ImageView integration for bmw_e46_user_hero.
-- Reduced visual noise.
-- Softer card borders.
-- Smaller premium quick chips.
-- Cleaner Home menu.
-- Accent bars instead of oversized Unicode icons.
-- Reduced Home clutter.
-- Safe mode and no-write guard remain active.
+Do not use as real coding tool yet.
 
 Expected artifact name:
 
 E46ScannerBT-V4.2-premium-decoded-diagnostics-debug-apk
 
-Validation priority:
+Critical validation:
 
 1. APK compiles.
 2. App opens without crash.
-3. Home matches the Sticklight direction.
-4. Hero does not overlap text.
-5. Car image is centered and contained.
-6. Chips are not cut.
-7. Bottom navigation remains usable.
-8. Backup, Tests, Diagnostics and Logs still work.
+3. Home loads.
+4. Backup screen opens.
+5. Tests screen opens.
+6. Diagnostics screen opens.
+7. Logs screen opens.
+8. Android Back returns to previous screen.
+9. Export/share works.
+10. No write action is possible.
